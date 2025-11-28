@@ -28,7 +28,7 @@ function Navbar() {
               <span className="text-white font-bold text-xl">C</span>
             </div>
             <span className="text-xl sm:text-2xl font-bold text-blue-900">
-              CHikitsaalye
+              Chikitsaalye
             </span>
           </Link>
 
