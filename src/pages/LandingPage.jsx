@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Added for navigation
 import {
   Search,
   Calendar,
@@ -8,18 +9,39 @@ import {
   Shield,
   CheckCircle,
   Building2,
-  Hospital,
-  Microscope,
+  Heart,
+  Stethoscope,
+  Baby,
+  Smile,
+  Eye,
+  Activity,
   Ambulance,
-  ChevronDown,
-  Menu,
-  X,
 } from "lucide-react";
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("doctors");
-  const [language, setLanguage] = useState("english");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // State for input
+  const navigate = useNavigate();
+
+  // Handle the Search Button Click
+  const handleSearch = () => {
+    // Navigate to search page with query params
+    navigate(`/search?type=${activeTab}&q=${searchQuery}`);
+  };
+
+  // Quick Category Navigation
+  const handleCategoryClick = (category) => {
+    navigate(`/search?type=doctors&category=${category}`);
+  };
+
+  const categories = [
+    { icon: Stethoscope, label: "General", id: "general" },
+    { icon: Baby, label: "Women/Gynae", id: "gynae" },
+    { icon: Heart, label: "Heart", id: "cardio" },
+    { icon: Activity, label: "Bone/Ortho", id: "ortho" },
+    { icon: Smile, label: "Dental", id: "dental" },
+    { icon: Eye, label: "Eye/Vision", id: "eye" },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -36,41 +58,26 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6">
+          {/* Search Bar Container */}
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 border border-blue-100">
+            {/* Tabs */}
             <div className="flex flex-wrap gap-2 mb-4 border-b pb-4">
-              <button
-                onClick={() => setActiveTab("doctors")}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === "doctors"
-                    ? "bg-blue-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Doctors
-              </button>
-              <button
-                onClick={() => setActiveTab("hospitals")}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === "hospitals"
-                    ? "bg-blue-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Hospitals
-              </button>
-              <button
-                onClick={() => setActiveTab("labs")}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === "labs"
-                    ? "bg-blue-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Labs
-              </button>
+              {["doctors", "hospitals", "labs"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-3 rounded-lg font-semibold capitalize transition-all ${
+                    activeTab === tab
+                      ? "bg-blue-900 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
 
+            {/* Input & Button */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <Search
@@ -79,13 +86,45 @@ export default function LandingPage() {
                 />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={`Search for ${activeTab} in Kanpur...`}
                   className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-900 focus:outline-none"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <button className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg text-lg">
+              <button
+                onClick={handleSearch}
+                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg text-lg transition-transform active:scale-95"
+              >
                 Search
               </button>
+            </div>
+
+            {/* New: Specialist Category Grid (Visual Search) */}
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <p className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wide">
+                Search by Specialist
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                {categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat.id)}
+                    className="flex flex-col items-center cursor-pointer group"
+                  >
+                    <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-2 group-hover:bg-blue-100 transition-colors">
+                      <cat.icon
+                        size={24}
+                        className="text-blue-900 group-hover:scale-110 transition-transform"
+                      />
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 text-center">
+                      {cat.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

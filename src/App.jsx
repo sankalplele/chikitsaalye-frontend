@@ -5,6 +5,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import SearchResultsPage from "./pages/SearchResultsPage.jsx";
 import NotFound from "./components/NotFound.jsx";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/search" element={<SearchResultsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
