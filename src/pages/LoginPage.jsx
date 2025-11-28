@@ -34,6 +34,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Attempting Login...");
+    console.log("Sending URL:", "/api/auth/login/");
+    console.log(
+      "Sending Body:",
+      JSON.stringify({
+        mobile: mobile,
+        password: password,
+      })
+    );
     setError("");
     setMobileError("");
 
@@ -50,19 +59,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://backend-7tru.onrender.com/auth/login/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mobile: mobile,
-            password: password,
-          }),
-        }
-      );
+      const response = await fetch("/api/auth/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobile: mobile,
+          password: password,
+        }),
+      });
 
       const data = await response.json();
 
@@ -70,6 +76,7 @@ export default function LoginPage() {
         // Success - store token
         localStorage.setItem("authToken", data.token);
         console.log("Redirecting...");
+        console.log("Received Token:", data.token);
         // Here you would typically redirect to dashboard
         setError("");
         alert("Login Successful! Token stored.");

@@ -112,21 +112,18 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://backend-7tru.onrender.com/auth/register/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: formData.email,
-            mobile: formData.mobile,
-            password: formData.password,
-            confirm_password: formData.confirm_password,
-          }),
-        }
-      );
+      const response = await fetch("/api/auth/register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          mobile: formData.mobile,
+          password: formData.password,
+          confirm_password: formData.confirm_password,
+        }),
+      });
 
       const data = await response.json();
 

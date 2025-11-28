@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle, User, Calendar, FileText, LogOut } from "lucide-react";
 
 function Dashboard() {
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState("XD");
   const navigate = useNavigate();
 
   useEffect(() => {
