@@ -1,39 +1,147 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Added for navigation
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Calendar,
   MapPin,
   FileText,
-  Phone,
+  Ambulance,
+  AlertCircle,
+  Building,
+  User,
+  Star,
+  X,
+  Microscope,
+  TestTube,
   Shield,
   CheckCircle,
-  Building2,
-  Heart,
   Stethoscope,
-  Baby,
+  Heart,
+  Activity,
   Smile,
   Eye,
-  Activity,
-  Ambulance,
+  Baby,
 } from "lucide-react";
+
+// --- 1. SEARCH DATABASE WITH TESTS ---
+const SEARCH_DATABASE = [
+  // HOSPITALS & DOCTORS (Existing)
+  {
+    id: "h1",
+    name: "Ursula Hospital",
+    type: "govt",
+    category: "Hospital",
+    rating: 4.0,
+    kind: "hospital",
+  },
+  {
+    id: "d1",
+    name: "Dr. Rajesh Gupta",
+    type: "private",
+    category: "Physician",
+    rating: 4.8,
+    kind: "doctor",
+  },
+
+  // LABS (The Lab Centers themselves)
+  {
+    id: "l1",
+    name: "Dr. Lal PathLabs",
+    type: "private",
+    category: "Lab",
+    rating: 4.5,
+    kind: "lab",
+  },
+  {
+    id: "l2",
+    name: "Pathkind Diagnostics",
+    type: "private",
+    category: "Lab",
+    rating: 4.2,
+    kind: "lab",
+  },
+
+  // *** NEW: SPECIFIC TESTS (The "Product" users search for) ***
+  {
+    id: "t1",
+    name: "CBC (Complete Blood Count)",
+    category: "Blood Test",
+    kind: "test",
+  },
+  {
+    id: "t2",
+    name: "Thyroid Profile (T3, T4, TSH)",
+    category: "Hormone Test",
+    kind: "test",
+  },
+  { id: "t3", name: "Lipid Profile", category: "Heart Test", kind: "test" },
+  {
+    id: "t4",
+    name: "MRI Scan (Whole Body)",
+    category: "Radiology",
+    kind: "test",
+  },
+  { id: "t5", name: "HbA1c (Sugar Test)", category: "Diabetes", kind: "test" },
+];
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("doctors");
-  const [searchQuery, setSearchQuery] = useState(""); // State for input
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isEmergency, setIsEmergency] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
 
-  // Handle the Search Button Click
+  // --- SMART SEARCH LOGIC ---
+  useEffect(() => {
+    if (searchQuery.length > 0 && !isEmergency) {
+      const lowerQuery = searchQuery.toLowerCase();
+
+      const matches = SEARCH_DATABASE.filter((item) => {
+        const textMatch = item.name.toLowerCase().includes(lowerQuery);
+
+        // CONTEXT AWARE FILTERING
+        if (activeTab === "doctors") return textMatch && item.kind === "doctor";
+        if (activeTab === "hospitals")
+          return textMatch && item.kind === "hospital";
+
+        // IMPORTANT: If Lab tab is active, show Labs AND Tests
+        if (activeTab === "labs")
+          return textMatch && (item.kind === "lab" || item.kind === "test");
+
+        return false;
+      });
+
+      setSuggestions(matches);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [searchQuery, isEmergency, activeTab]);
+
   const handleSearch = () => {
-    // Navigate to search page with query params
+    if (isEmergency) return alert("Connecting to 108...");
     navigate(`/search?type=${activeTab}&q=${searchQuery}`);
   };
 
-  // Quick Category Navigation
-  const handleCategoryClick = (category) => {
-    navigate(`/search?type=doctors&category=${category}`);
+  const handleSuggestionClick = (item) => {
+    let urlType = "doctors";
+    if (item.kind === "hospital") urlType = "hospitals";
+    if (item.kind === "lab" || item.kind === "test") urlType = "labs";
+
+    // If it's a test, we pass it as the query so the results page can filter by it
+    navigate(`/search?type=${urlType}&q=${item.name}`);
+    setShowSuggestions(false);
   };
 
+  const getSuggestionIcon = (kind) => {
+    if (kind === "doctor") return <User size={18} />;
+    if (kind === "hospital") return <Building size={18} />;
+    if (kind === "test") return <TestTube size={18} />; // Icon for tests
+    return <Microscope size={18} />;
+  };
+
+  // --- RENDER HELPERS ---
   const categories = [
     { icon: Stethoscope, label: "General", id: "general" },
     { icon: Baby, label: "Women/Gynae", id: "gynae" },
@@ -44,271 +152,169 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 sm:py-20">
+    <div
+      className="min-h-screen bg-white"
+      onClick={() => setShowSuggestions(false)}
+    >
+      {/* EMERGENCY BAR (Keep existing code) */}
+      <div className="bg-red-50 border-b border-red-100 p-2">
+        <div className="max-w-7xl mx-auto flex justify-between px-4 items-center">
+          <div className="flex items-center text-red-700 text-sm font-bold">
+            <AlertCircle size={16} className="mr-2" />
+            Emergency Mode
+          </div>
+          <button
+            onClick={() => setIsEmergency(!isEmergency)}
+            className="text-xs font-bold text-red-600 bg-white px-3 py-1 rounded border border-red-200"
+          >
+            Toggle
+          </button>
+        </div>
+      </div>
+
+      <section
+        className={`py-12 sm:py-20 ${
+          isEmergency
+            ? "bg-red-50"
+            : "bg-gradient-to-br from-blue-50 via-white to-blue-50"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-3xl sm:text-5xl font-bold text-blue-900 mb-4">
-              Health Services for Bharat
+          <div className="text-center mb-8">
+            <h1
+              className={`text-3xl font-bold mb-4 ${
+                isEmergency ? "text-red-700" : "text-blue-900"
+              }`}
+            >
+              {isEmergency
+                ? "Emergency Services"
+                : "Health Services for Bharat"}
             </h1>
-            <p className="text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto">
-              Connecting you with trusted healthcare providers in Tier 2 & Tier
-              3 cities
-            </p>
           </div>
 
-          {/* Search Bar Container */}
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 border border-blue-100">
-            {/* Tabs */}
-            <div className="flex flex-wrap gap-2 mb-4 border-b pb-4">
-              {["doctors", "hospitals", "labs"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 rounded-lg font-semibold capitalize transition-all ${
-                    activeTab === tab
-                      ? "bg-blue-900 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          <div
+            className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-6 relative z-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* TABS */}
+            {!isEmergency && (
+              <div className="flex flex-wrap gap-2 mb-4 border-b pb-4">
+                {["doctors", "hospitals", "labs"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      setSearchQuery("");
+                    }}
+                    className={`px-6 py-3 rounded-lg font-semibold capitalize transition-all ${
+                      activeTab === tab
+                        ? "bg-blue-900 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Input & Button */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* INPUT */}
+            <div className="flex flex-col sm:flex-row gap-3 relative">
               <div className="flex-1 relative">
-                <Search
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                  {activeTab === "labs" && !isEmergency ? (
+                    <Microscope size={20} />
+                  ) : (
+                    <Search size={20} />
+                  )}
+                </div>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={`Search for ${activeTab} in Kanpur...`}
+                  // DYNAMIC PLACEHOLDER BASED ON TAB
+                  placeholder={
+                    isEmergency
+                      ? "Location..."
+                      : activeTab === "labs"
+                      ? "Search for tests (e.g. CBC, Thyroid, MRI)..."
+                      : `Search for ${activeTab}...`
+                  }
                   className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-300 rounded-xl focus:border-blue-900 focus:outline-none"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  onFocus={() =>
+                    searchQuery.length > 0 && setShowSuggestions(true)
+                  }
                 />
+
+                {/* SUGGESTIONS DROPDOWN */}
+                {showSuggestions && !isEmergency && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                    {suggestions.length > 0 ? (
+                      suggestions.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSuggestionClick(item)}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                item.kind === "test"
+                                  ? "bg-purple-100 text-purple-600"
+                                  : "bg-blue-100 text-blue-600"
+                              }`}
+                            >
+                              {getSuggestionIcon(item.kind)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-900 text-sm">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {item.kind === "test"
+                                  ? "Diagnostic Test"
+                                  : item.category}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        No matches found.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleSearch}
-                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 shadow-lg text-lg transition-transform active:scale-95"
+                className={`px-8 py-4 text-white font-bold rounded-xl shadow-lg ${
+                  isEmergency ? "bg-red-600" : "bg-orange-500"
+                }`}
               >
                 Search
               </button>
             </div>
 
-            {/* New: Specialist Category Grid (Visual Search) */}
-            <div className="mt-8 pt-6 border-t border-gray-100">
-              <p className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wide">
-                Search by Specialist
-              </p>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-                {categories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    onClick={() => handleCategoryClick(cat.id)}
-                    className="flex flex-col items-center cursor-pointer group"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-2 group-hover:bg-blue-100 transition-colors">
-                      <cat.icon
-                        size={24}
-                        className="text-blue-900 group-hover:scale-110 transition-transform"
-                      />
+            {/* Specialist Grid (Hide if Lab tab is active to reduce clutter, or show Lab categories) */}
+            {!isEmergency && activeTab !== "labs" && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+                  {categories.map((cat) => (
+                    <div key={cat.id} className="flex flex-col items-center">
+                      <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-900 mb-1">
+                        <cat.icon size={20} />
+                      </div>
+                      <span className="text-xs text-gray-600">{cat.label}</span>
                     </div>
-                    <span className="text-xs sm:text-sm font-medium text-gray-700 text-center">
-                      {cat.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Action Grid */}
-      <section className="py-12 sm:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-blue-900 mb-10">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Calendar,
-                title: "Book Appointment",
-                desc: "Schedule with verified doctors",
-                color: "blue",
-              },
-              {
-                icon: MapPin,
-                title: "Find Labs Near Me",
-                desc: "Locate diagnostic centers",
-                color: "green",
-              },
-              {
-                icon: FileText,
-                title: "Digitize Reports",
-                desc: "For diagnostic centers",
-                color: "purple",
-              },
-              {
-                icon: Ambulance,
-                title: "Emergency Services",
-                desc: "24/7 helpline support",
-                color: "red",
-              },
-            ].map((action, idx) => (
-              <div
-                key={idx}
-                className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group"
-              >
-                <div
-                  className={`w-16 h-16 rounded-xl bg-${action.color}-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
-                >
-                  <action.icon
-                    size={32}
-                    className={`text-${action.color}-600`}
-                  />
+                  ))}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {action.title}
-                </h3>
-                <p className="text-gray-600">{action.desc}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
-
-      {/* Trust Indicators */}
-      <section className="py-12 sm:py-16 bg-blue-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-blue-900 mb-10">
-            Why Choose CHikitsaalye?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: CheckCircle,
-                title: "Verified Doctors",
-                desc: "All healthcare providers are government verified and licensed",
-              },
-              {
-                icon: Shield,
-                title: "100% Secure",
-                desc: "Your health data is encrypted and protected",
-              },
-              {
-                icon: Building2,
-                title: "Government Compliant",
-                desc: "Fully aligned with Digital India and ABHA standards",
-              },
-            ].map((benefit, idx) => (
-              <div key={idx} className="text-center">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <benefit.icon size={40} className="text-blue-900" />
-                </div>
-                <h3 className="text-xl font-bold text-blue-900 mb-2">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-700 leading-relaxed">{benefit.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* For Partners */}
-      <section className="py-12 sm:py-16 bg-gradient-to-r from-orange-500 to-orange-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-          <h2 className="text-2xl sm:text-4xl font-bold mb-4">
-            For Healthcare Partners
-          </h2>
-          <p className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
-            Are you a clinic, hospital, or diagnostic lab? Join our digital
-            healthcare revolution
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-4 bg-white text-orange-600 font-bold rounded-xl hover:bg-gray-100 shadow-lg text-lg">
-              Register Your Centre
-            </button>
-            <button className="px-8 py-4 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 shadow-lg text-lg">
-              Learn More
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-blue-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">CHikitsaalye</h3>
-              <p className="text-blue-200">Digitizing healthcare for Bharat</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Quick Links</h4>
-              <ul className="space-y-2 text-blue-200">
-                <li>
-                  <a href="#" className="hover:text-white">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    Services
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    Privacy Policy
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">For Partners</h4>
-              <ul className="space-y-2 text-blue-200">
-                <li>
-                  <a href="#" className="hover:text-white">
-                    Register Centre
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    Partner Login
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white">
-                    Resources
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Emergency Helpline</h4>
-              <div className="flex items-center space-x-2 text-blue-200 mb-2">
-                <Phone size={20} />
-                <span className="text-xl font-bold">108</span>
-              </div>
-              <p className="text-sm text-blue-200">24/7 Emergency Services</p>
-            </div>
-          </div>
-          <div className="border-t border-blue-800 pt-6 text-center text-blue-200 text-sm">
-            <p>
-              © 2024 CHikitsaalye.com | A Digital India Initiative | All Rights
-              Reserved
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
