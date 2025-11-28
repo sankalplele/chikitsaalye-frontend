@@ -25,25 +25,99 @@ import {
 
 // --- 1. SEARCH DATABASE WITH TESTS ---
 const SEARCH_DATABASE = [
-  // HOSPITALS & DOCTORS (Existing)
-  {
-    id: "h1",
-    name: "Ursula Hospital",
-    type: "govt",
-    category: "Hospital",
-    rating: 4.0,
-    kind: "hospital",
-  },
+  // DOCTORS
   {
     id: "d1",
     name: "Dr. Rajesh Gupta",
     type: "private",
-    category: "Physician",
+    category: "General Physician",
     rating: 4.8,
     kind: "doctor",
   },
+  {
+    id: "d2",
+    name: "Dr. Anjali Singh",
+    type: "private",
+    category: "Gynaecologist",
+    rating: 4.9,
+    kind: "doctor",
+  },
+  {
+    id: "d3",
+    name: "Dr. V.K. Verma",
+    type: "govt",
+    category: "Orthopedics",
+    rating: 4.2,
+    kind: "doctor",
+  },
+  {
+    id: "d4",
+    name: "Dr. Sharma",
+    type: "private",
+    category: "Cardiologist",
+    rating: 4.7,
+    kind: "doctor",
+  },
+  {
+    id: "d5",
+    name: "Dr. Priyanshi",
+    type: "private",
+    category: "Pediatrician",
+    rating: 4.8,
+    kind: "doctor",
+  },
+  {
+    id: "d6",
+    name: "Dr. Amit Kumar",
+    type: "govt",
+    category: "Dentist",
+    rating: 4.0,
+    kind: "doctor",
+  },
+  {
+    id: "d7",
+    name: "Dr. Sunita Mehta",
+    type: "private",
+    category: "Eye Specialist",
+    rating: 4.6,
+    kind: "doctor",
+  },
 
-  // LABS (The Lab Centers themselves)
+  // HOSPITALS
+  {
+    id: "h1",
+    name: "Ursula Hospital",
+    type: "govt",
+    category: "General Hospital",
+    rating: 4.0,
+    kind: "hospital",
+  },
+  {
+    id: "h2",
+    name: "Regency Hospital",
+    type: "private",
+    category: "Multi-Speciality",
+    rating: 4.6,
+    kind: "hospital",
+  },
+  {
+    id: "kgmu",
+    name: "KGMU Lucknow",
+    type: "govt",
+    category: "Medical College",
+    rating: 4.8,
+    kind: "hospital",
+  },
+  {
+    id: "h4",
+    name: "Cardiology Institute",
+    type: "govt",
+    category: "Heart Center",
+    rating: 4.5,
+    kind: "hospital",
+  },
+
+  // LABS & TESTS
   {
     id: "l1",
     name: "Dr. Lal PathLabs",
@@ -60,8 +134,6 @@ const SEARCH_DATABASE = [
     rating: 4.2,
     kind: "lab",
   },
-
-  // *** NEW: SPECIFIC TESTS (The "Product" users search for) ***
   {
     id: "t1",
     name: "CBC (Complete Blood Count)",
@@ -75,13 +147,8 @@ const SEARCH_DATABASE = [
     kind: "test",
   },
   { id: "t3", name: "Lipid Profile", category: "Heart Test", kind: "test" },
-  {
-    id: "t4",
-    name: "MRI Scan (Whole Body)",
-    category: "Radiology",
-    kind: "test",
-  },
-  { id: "t5", name: "HbA1c (Sugar Test)", category: "Diabetes", kind: "test" },
+  { id: "t4", name: "MRI Scan", category: "Radiology", kind: "test" },
+  { id: "t5", name: "HbA1c", category: "Diabetes", kind: "test" },
 ];
 
 export default function LandingPage() {
@@ -132,6 +199,10 @@ export default function LandingPage() {
     // If it's a test, we pass it as the query so the results page can filter by it
     navigate(`/search?type=${urlType}&q=${item.name}`);
     setShowSuggestions(false);
+  };
+  const handleCategoryClick = (categoryId) => {
+    // Force navigation to doctors tab with the specific category
+    navigate(`/search?type=doctors&category=${categoryId}`);
   };
 
   const getSuggestionIcon = (kind) => {
@@ -193,7 +264,7 @@ export default function LandingPage() {
           </div>
 
           <div
-            className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-6 relative z-50"
+            className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6 border border-gray-100 relative z-20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* TABS */}
@@ -299,15 +370,25 @@ export default function LandingPage() {
 
             {/* Specialist Grid (Hide if Lab tab is active to reduce clutter, or show Lab categories) */}
             {!isEmergency && activeTab !== "labs" && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="mt-8 pt-6 border-t border-gray-100 relative z-10">
+                <p className="text-sm font-semibold text-gray-500 mb-4 uppercase">
+                  Common Concerns
+                </p>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
                   {categories.map((cat) => (
-                    <div key={cat.id} className="flex flex-col items-center">
-                      <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-900 mb-1">
-                        <cat.icon size={20} />
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryClick(cat.id)}
+                      className="flex flex-col items-center group focus:outline-none"
+                      type="button"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-2 group-hover:bg-blue-100 border border-blue-100 transition-colors">
+                        <cat.icon size={24} className="text-blue-900" />
                       </div>
-                      <span className="text-xs text-gray-600">{cat.label}</span>
-                    </div>
+                      <span className="text-xs font-medium text-gray-700">
+                        {cat.label}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>
