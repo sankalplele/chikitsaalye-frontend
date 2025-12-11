@@ -18,7 +18,7 @@ import {
   Droplet,
 } from "lucide-react";
 
-// --- MOCK DATA ---
+// --- 1. UPDATED MOCK DATA (Matches Landing Page Suggestions) ---
 const LABS_DATA = [
   {
     id: "l1",
@@ -29,7 +29,11 @@ const LABS_DATA = [
     homeCollection: true,
     tests: [
       { name: "CBC", price: 299 },
+      { name: "Complete Blood Count", price: 299 }, // Added Synonym
       { name: "Thyroid Profile", price: 550 },
+      { name: "Lipid Profile", price: 600 },
+      { name: "HbA1c", price: 450 },
+      { name: "Sugar Test", price: 450 },
       { name: "MRI Scan", price: 6500 },
     ],
   },
@@ -43,6 +47,21 @@ const LABS_DATA = [
     tests: [
       { name: "CBC", price: 250 },
       { name: "Thyroid Profile", price: 500 },
+      { name: "Lipid Profile", price: 650 },
+      { name: "HbA1c", price: 400 },
+    ],
+  },
+  {
+    id: "l3",
+    name: "City X-Ray & Scan",
+    location: "Kakadeo",
+    distance: "3.5 km",
+    rating: 4.0,
+    homeCollection: true,
+    tests: [
+      { name: "CBC", price: 350 },
+      { name: "MRI Scan", price: 4500 },
+      { name: "CT Scan", price: 2200 },
     ],
   },
 ];
@@ -50,7 +69,7 @@ const LABS_DATA = [
 const HOSPITAL_DATA = [
   {
     id: "kgmu",
-    name: "KGMU Lucknow",
+    name: "King George's Medical University (KGMU)",
     type: "govt",
     specialties: ["General", "Ortho", "ENT", "Cardio", "Pediatrics", "Gynae"],
     location: "Chowk, Lucknow",
@@ -184,28 +203,6 @@ const DOCTOR_DATA = [
     fees: 300,
     nextSlot: "Today, 7:00 PM",
   },
-  {
-    id: 8,
-    name: "Dr. Sunita Mehta",
-    type: "private",
-    category: "Eye Specialist",
-    location: "Gumti No. 5",
-    distance: "2.8 km",
-    rating: 4.6,
-    fees: 300,
-    nextSlot: "Today, 7:00 PM",
-  },
-  {
-    id: 9,
-    name: "Dr. Sunita Mehta",
-    type: "govt",
-    category: "Eye Specialist",
-    location: "Gumti No. 5",
-    distance: "2.8 km",
-    rating: 4.6,
-    fees: 300,
-    nextSlot: "Today, 7:00 PM",
-  },
 ];
 
 export default function SearchResultsPage() {
@@ -229,11 +226,17 @@ export default function SearchResultsPage() {
   // --- FILTERING LOGIC ---
   const getTestPrice = (lab) => {
     if (!query) return 0;
+
+    // Normalize strings for comparison
     const searchStr = query.toLowerCase();
+
     const test = lab.tests?.find((t) => {
       const testName = t.name.toLowerCase();
+      // Check 1: Does Lab Test contain Query? (e.g. Query: "Thyroid" -> Lab: "Thyroid Profile")
+      // Check 2: Does Query contain Lab Test? (e.g. Query: "Thyroid Profile (T3)" -> Lab: "Thyroid Profile")
       return testName.includes(searchStr) || searchStr.includes(testName);
     });
+
     return test ? test.price : 0;
   };
 
@@ -250,7 +253,7 @@ export default function SearchResultsPage() {
         const tagMap = {
           cardio: "cardio",
           heart: "cardio",
-          baby: "pediatric", // pediatrician matches
+          baby: "pediatric",
           gynae: "gynaecologist",
           ortho: "orthopedics",
           eye: "eye",
@@ -266,21 +269,30 @@ export default function SearchResultsPage() {
       if (query) {
         const lowerQ = query.toLowerCase();
         const nameMatch = item.name.toLowerCase().includes(lowerQ);
+
         const testMatch =
           type === "labs" &&
-          item.tests?.some((t) => t.name.toLowerCase().includes(lowerQ));
+          item.tests?.some((t) => {
+            const testName = t.name.toLowerCase();
+            return testName.includes(lowerQ) || lowerQ.includes(testName);
+          });
 
         if (!nameMatch && !testMatch) return false;
       }
 
-      // 3. Type Filter
+      // 3. Type Filter (Govt/Pvt) - Only for Doctors/Hospitals
       if (type !== "labs" && filterType !== "all" && item.type !== filterType)
         return false;
 
       // 4. Lab Filters
       if (type === "labs") {
         if (showHomeCollectionOnly && !item.homeCollection) return false;
-        if (query && getTestPrice(item) === 0) return false; // Hide labs that don't have the test if searching for test
+        // Logic: If user searched for a TEST, hide labs that don't have it.
+        // If user searched for a LAB NAME (e.g. "Pathkind"), show it even if price is 0 (test not selected)
+        const isLabNameSearch = item.name
+          .toLowerCase()
+          .includes(query.toLowerCase());
+        if (!isLabNameSearch && query && getTestPrice(item) === 0) return false;
       }
 
       return true;
@@ -312,7 +324,7 @@ export default function SearchResultsPage() {
           </div>
         </div>
 
-        {/* --- RESTORED FILTER TOGGLES --- */}
+        {/* --- FILTER TOGGLES --- */}
         <div className="max-w-3xl mx-auto mt-4 flex items-center space-x-3 overflow-x-auto pb-1 hide-scrollbar">
           {type === "labs" ? (
             // Lab Filters
@@ -395,7 +407,7 @@ export default function SearchResultsPage() {
           >
             {/* RENDER CARD CONTENT BASED ON TYPE */}
             <div className="flex">
-              {/* --- RESTORED COLOR STRIPE FOR DOCTORS/HOSPITALS --- */}
+              {/* --- COLOR STRIPE FOR DOCTORS/HOSPITALS --- */}
               {type !== "labs" && (
                 <div
                   className={`w-1.5 ${
@@ -419,7 +431,7 @@ export default function SearchResultsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  {/* --- RESTORED VISUAL BADGES (TAGS) --- */}
+                  {/* --- VISUAL BADGES (TAGS) --- */}
                   {type !== "labs" && (
                     <span
                       className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${
@@ -444,20 +456,18 @@ export default function SearchResultsPage() {
                   {/* Lab Specific Logic */}
                   {type === "labs" ? (
                     <div className="mt-2">
-                      {query &&
-                      item.tests.find((t) =>
-                        t.name.toLowerCase().includes(query.toLowerCase())
-                      ) ? (
-                        <span className="text-blue-800 font-bold text-lg">
-                          ₹
-                          {
-                            item.tests.find((t) =>
-                              t.name.toLowerCase().includes(query.toLowerCase())
-                            ).price
-                          }
-                        </span>
+                      {/* IF user searched for a TEST, show the price. IF user searched for LAB NAME, show "View Profile" */}
+                      {query && getTestPrice(item) > 0 ? (
+                        <>
+                          <p className="text-[10px] text-gray-500 uppercase font-semibold mt-1">
+                            Best Price For {query}
+                          </p>
+                          <span className="text-blue-800 font-bold text-lg">
+                            ₹{getTestPrice(item)}
+                          </span>
+                        </>
                       ) : (
-                        <span className="text-orange-600 text-xs font-bold flex items-center">
+                        <span className="text-orange-600 text-xs font-bold flex items-center mt-2">
                           View Test List <ChevronRight size={14} />
                         </span>
                       )}
