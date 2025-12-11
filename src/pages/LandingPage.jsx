@@ -191,15 +191,24 @@ export default function LandingPage() {
     navigate(`/search?type=${activeTab}&q=${searchQuery}`);
   };
 
+  // --- FIX: DIRECT NAVIGATION LOGIC ---
   const handleSuggestionClick = (item) => {
-    let urlType = "doctors";
-    if (item.kind === "hospital") urlType = "hospitals";
-    if (item.kind === "lab" || item.kind === "test") urlType = "labs";
-
-    // If it's a test, we pass it as the query so the results page can filter by it
-    navigate(`/search?type=${urlType}&q=${item.name}`);
+    if (item.kind === "doctor") {
+      // Go directly to Doctor Profile
+      navigate(`/doctor/${item.id}`);
+    } else if (item.kind === "hospital") {
+      // Go directly to Hospital Profile
+      navigate(`/hospital/${item.id}`);
+    } else if (item.kind === "lab") {
+      // Go directly to Lab Profile
+      navigate(`/lab/${item.id}`);
+    } else {
+      // It's a TEST (e.g. CBC) -> Go to Search Results to compare prices
+      navigate(`/search?type=labs&q=${item.name}`);
+    }
     setShowSuggestions(false);
   };
+
   const handleCategoryClick = (categoryId) => {
     // Force navigation to doctors tab with the specific category
     navigate(`/search?type=doctors&category=${categoryId}`);
@@ -227,7 +236,7 @@ export default function LandingPage() {
       className="min-h-screen bg-white"
       onClick={() => setShowSuggestions(false)}
     >
-      {/* EMERGENCY BAR (Keep existing code) */}
+      {/* EMERGENCY BAR */}
       <div className="bg-red-50 border-b border-red-100 p-2">
         <div className="max-w-7xl mx-auto flex justify-between px-4 items-center">
           <div className="flex items-center text-red-700 text-sm font-bold">
@@ -290,7 +299,7 @@ export default function LandingPage() {
             )}
 
             {/* INPUT */}
-            <div className="flex flex-col sm:flex-row gap-3 relative">
+            <div className="flex flex-col sm:flex-row gap-3 relative z-30">
               <div className="flex-1 relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   {activeTab === "labs" && !isEmergency ? (
@@ -368,7 +377,7 @@ export default function LandingPage() {
               </button>
             </div>
 
-            {/* Specialist Grid (Hide if Lab tab is active to reduce clutter, or show Lab categories) */}
+            {/* Specialist Grid */}
             {!isEmergency && activeTab !== "labs" && (
               <div className="mt-8 pt-6 border-t border-gray-100 relative z-10">
                 <p className="text-sm font-semibold text-gray-500 mb-4 uppercase">
