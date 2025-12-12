@@ -172,13 +172,13 @@ export default function LandingPage() {
       className="min-h-screen font-sans overflow-x-hidden w-full relative bg-gray-50"
       onClick={() => setShowSuggestions(false)}
     >
-      {/* 1. HERO SECTION - RESTORED ORIGINAL BACKGROUND */}
+      {/* 1. HERO SECTION */}
       <section
         className={`relative min-h-screen flex flex-col justify-center items-center px-4 py-6 overflow-hidden transition-colors duration-500 pt-28 lg:pt-0 ${
-          isEmergency ? "bg-red-50" : "bg-blue-900" // Restored bg-blue-900
+          isEmergency ? "bg-red-50" : "bg-blue-900"
         }`}
       >
-        {/* Background Pattern Only (Removed Gradients/Orbs) */}
+        {/* Background Pattern Only */}
         {!isEmergency && (
           <div
             className="absolute inset-0 opacity-10 pointer-events-none z-0"
@@ -229,15 +229,17 @@ export default function LandingPage() {
           {/* --- RESPONSIVE GRID LAYOUT --- */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left">
             {/* 1. SEARCH SECTION (Middle Column on Desktop, FIRST on Mobile) */}
-            <div className="flex flex-col gap-4 w-full order-1 lg:order-2">
+            <div className="flex flex-col gap-4 w-full order-1 lg:order-2 relative z-50">
+              {" "}
+              {/* Increased Z-Index here */}
               {/* A. SEARCH BAR */}
               <div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20"
+                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20 z-50" // Explicit Z-50
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Tabs */}
                 {!isEmergency && (
-                  <div className="flex gap-1 mb-2 bg-gray-100/50 p-1 rounded-xl">
+                  <div className="flex gap-1 mb-2 bg-gray-100/50 p-1 rounded-xl relative z-10">
                     {["doctors", "hospitals", "labs"].map((tab) => (
                       <button
                         key={tab}
@@ -257,9 +259,9 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2 relative">
+                <div className="flex gap-2 relative z-50">
                   <div className="flex-1 relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
                       {isEmergency ? (
                         <Ambulance size={20} className="text-red-500" />
                       ) : (
@@ -273,13 +275,13 @@ export default function LandingPage() {
                       placeholder={
                         isEmergency ? "Location..." : `Search ${activeTab}...`
                       }
-                      className="w-full pl-10 pr-4 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all relative z-10"
                       onFocus={() =>
                         searchQuery.length > 0 && setShowSuggestions(true)
                       }
                     />
 
-                    {/* SUGGESTIONS DROPDOWN */}
+                    {/* SUGGESTIONS DROPDOWN - FIXED Z-INDEX */}
                     {showSuggestions && !isEmergency && (
                       <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] max-h-[300px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {suggestions.length > 0 ? (
@@ -314,7 +316,7 @@ export default function LandingPage() {
                   </div>
                   <button
                     onClick={handleSearch}
-                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-lg whitespace-nowrap transition-transform active:scale-95 ${
+                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-lg whitespace-nowrap transition-transform active:scale-95 relative z-10 ${
                       isEmergency
                         ? "bg-red-600 hover:bg-red-700"
                         : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
@@ -324,10 +326,10 @@ export default function LandingPage() {
                   </button>
                 </div>
               </div>
-
               {/* B. DYNAMIC CATEGORIES (Also part of main flow on mobile) */}
+              {/* Lower Z-Index (0 or default) so dropdown (z-100) covers it */}
               {!isEmergency && (
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full">
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative z-0">
                   {currentCategories.map((cat) => (
                     <button
                       key={cat.id}
@@ -349,7 +351,7 @@ export default function LandingPage() {
 
             {/* 2. LIVE OPD (Left Column Desktop, SECOND on Mobile) */}
             {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group">
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative z-0">
                 <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                   <div className="bg-green-500/20 p-2 rounded-lg group-hover:bg-green-500/30 transition-colors">
                     <Clock className="h-6 w-6 text-green-400" />
@@ -393,7 +395,7 @@ export default function LandingPage() {
 
             {/* 3. QUICK ACTIONS (Right Column Desktop, LAST on Mobile) */}
             {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group">
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative z-0">
                 <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                   <div className="bg-blue-500/20 p-2 rounded-lg group-hover:bg-blue-500/30 transition-colors">
                     <List className="h-6 w-6 text-blue-300" />
@@ -450,7 +452,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. TRUST SECTION (Kept clean white for contrast) */}
+      {/* 3. TRUST SECTION */}
       {!isEmergency && (
         <section className="py-20 bg-white relative z-10">
           <div className="max-w-7xl mx-auto px-4 text-center">
