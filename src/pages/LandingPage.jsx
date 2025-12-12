@@ -165,24 +165,23 @@ export default function LandingPage() {
     ],
   };
 
-  // Select the correct categories based on activeTab
   const currentCategories = CATEGORIES[activeTab] || CATEGORIES.doctors;
 
   return (
     <div
-      className="min-h-screen bg-gray-50 font-sans overflow-x-hidden w-full relative"
+      className="min-h-screen font-sans overflow-x-hidden w-full relative bg-gray-50"
       onClick={() => setShowSuggestions(false)}
     >
-      {/* 1. HERO SECTION */}
+      {/* 1. HERO SECTION - RESTORED ORIGINAL BACKGROUND */}
       <section
-        className={`relative min-h-screen flex flex-col justify-center items-center transition-colors duration-500 px-4 py-6 ${
-          isEmergency ? "bg-red-50" : "bg-blue-900"
+        className={`relative min-h-screen flex flex-col justify-center items-center px-4 py-6 overflow-hidden transition-colors duration-500 pt-28 lg:pt-0 ${
+          isEmergency ? "bg-red-50" : "bg-blue-900" // Restored bg-blue-900
         }`}
       >
-        {/* Background Pattern */}
+        {/* Background Pattern Only (Removed Gradients/Orbs) */}
         {!isEmergency && (
           <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
+            className="absolute inset-0 opacity-10 pointer-events-none z-0"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
@@ -196,7 +195,7 @@ export default function LandingPage() {
             className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all shadow-2xl ${
               isEmergency
                 ? "bg-white text-red-600 animate-pulse border-4 border-red-600"
-                : "bg-red-600 text-white hover:bg-red-700 border-2 border-white/20"
+                : "bg-red-600/90 hover:bg-red-700 text-white backdrop-blur-sm border border-white/20 hover:scale-105"
             }`}
           >
             <AlertCircle size={20} />
@@ -208,7 +207,7 @@ export default function LandingPage() {
         <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col items-center text-center">
           {/* HEADLINE */}
           <h1
-            className={`text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-3 max-w-4xl ${
+            className={`text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-3 max-w-4xl tracking-tight drop-shadow-lg ${
               isEmergency ? "text-red-700" : "text-white"
             }`}
           >
@@ -218,8 +217,8 @@ export default function LandingPage() {
           </h1>
 
           <p
-            className={`text-base md:text-lg mb-8 max-w-lg ${
-              isEmergency ? "text-red-600" : "text-blue-100/80"
+            className={`text-base md:text-lg mb-10 max-w-lg font-medium ${
+              isEmergency ? "text-red-600" : "text-blue-100/90"
             }`}
           >
             {isEmergency
@@ -227,62 +226,18 @@ export default function LandingPage() {
               : "Search doctors, hospitals & labs near you."}
           </p>
 
-          {/* --- CORE LAYOUT GRID: 3 COLUMNS --- */}
+          {/* --- RESPONSIVE GRID LAYOUT --- */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left">
-            {/* 1. LEFT COLUMN: LIVE OPD */}
-            {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 h-full min-h-[250px] transition-transform hover:scale-[1.02]">
-                <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                  <div className="bg-green-500/20 p-2 rounded-lg">
-                    <Clock className="h-6 w-6 text-green-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Live OPD</h3>
-                    <p className="text-xs text-blue-200">Real-time Queue</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">
-                      KGMU Lucknow
-                    </span>
-                    <span className="font-bold text-white bg-orange-500/80 px-2 py-0.5 rounded text-xs">
-                      45 Waiting
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">Ursula</span>
-                    <span className="font-bold text-white bg-green-500/80 px-2 py-0.5 rounded text-xs">
-                      12 Waiting
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">
-                      LLR Hospital
-                    </span>
-                    <span className="font-bold text-white bg-blue-500/80 px-2 py-0.5 rounded text-xs">
-                      Open
-                    </span>
-                  </div>
-                </div>
-
-                <button className="mt-auto w-full py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/10 transition-colors flex items-center justify-center gap-1">
-                  View All Centers <ChevronRight size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* 2. MIDDLE COLUMN: SEARCH + CATEGORIES */}
-            <div className="flex flex-col gap-4 w-full">
+            {/* 1. SEARCH SECTION (Middle Column on Desktop, FIRST on Mobile) */}
+            <div className="flex flex-col gap-4 w-full order-1 lg:order-2">
               {/* A. SEARCH BAR */}
               <div
-                className="bg-white rounded-2xl shadow-2xl p-2 relative w-full"
+                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Tabs */}
                 {!isEmergency && (
-                  <div className="flex gap-1 mb-2">
+                  <div className="flex gap-1 mb-2 bg-gray-100/50 p-1 rounded-xl">
                     {["doctors", "hospitals", "labs"].map((tab) => (
                       <button
                         key={tab}
@@ -292,8 +247,8 @@ export default function LandingPage() {
                         }}
                         className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold capitalize transition-all ${
                           activeTab === tab
-                            ? "bg-blue-900 text-white shadow"
-                            : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                            ? "bg-blue-900 text-white shadow-md transform scale-[1.02]"
+                            : "text-gray-500 hover:bg-white hover:text-gray-700"
                         }`}
                       >
                         {tab}
@@ -318,7 +273,7 @@ export default function LandingPage() {
                       placeholder={
                         isEmergency ? "Location..." : `Search ${activeTab}...`
                       }
-                      className="w-full pl-10 pr-4 py-3 text-base font-medium text-gray-900 bg-gray-50 border-0 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-full pl-10 pr-4 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                       onFocus={() =>
                         searchQuery.length > 0 && setShowSuggestions(true)
                       }
@@ -326,7 +281,7 @@ export default function LandingPage() {
 
                     {/* SUGGESTIONS DROPDOWN */}
                     {showSuggestions && !isEmergency && (
-                      <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] max-h-[300px] overflow-y-auto">
+                      <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] max-h-[300px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {suggestions.length > 0 ? (
                           suggestions.map((item) => (
                             <div
@@ -335,7 +290,7 @@ export default function LandingPage() {
                               className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 group transition-colors"
                             >
                               <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 group-hover:bg-blue-200">
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600 group-hover:bg-blue-200 group-hover:scale-110 transition-all">
                                   {getIcon(item.kind)}
                                 </div>
                                 <div>
@@ -359,10 +314,10 @@ export default function LandingPage() {
                   </div>
                   <button
                     onClick={handleSearch}
-                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-md whitespace-nowrap ${
+                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-lg whitespace-nowrap transition-transform active:scale-95 ${
                       isEmergency
-                        ? "bg-red-600"
-                        : "bg-orange-500 hover:bg-orange-600"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
                     }`}
                   >
                     Search
@@ -370,20 +325,20 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* B. DYNAMIC CATEGORIES - UPDATED FOR LABS */}
+              {/* B. DYNAMIC CATEGORIES (Also part of main flow on mobile) */}
               {!isEmergency && (
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full">
                   {currentCategories.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => handleCategoryClick(cat.id)}
-                      className="flex flex-col items-center justify-center group bg-white/5 hover:bg-white/20 border border-white/10 rounded-xl p-3 transition-all hover:-translate-y-1"
+                      className="flex flex-col items-center justify-center group bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl p-3 transition-all hover:-translate-y-1 hover:shadow-lg backdrop-blur-sm"
                     >
                       <cat.icon
                         size={24}
-                        className="text-blue-200 group-hover:text-white mb-2"
+                        className="text-blue-200 group-hover:text-white mb-2 transition-colors"
                       />
-                      <span className="text-xs font-medium text-blue-100 group-hover:text-white">
+                      <span className="text-xs font-medium text-blue-100 group-hover:text-white transition-colors">
                         {cat.label}
                       </span>
                     </button>
@@ -392,11 +347,55 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* 3. RIGHT COLUMN: QUICK ACTIONS CARD */}
+            {/* 2. LIVE OPD (Left Column Desktop, SECOND on Mobile) */}
             {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 h-full min-h-[250px] transition-transform hover:scale-[1.02]">
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group">
                 <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                  <div className="bg-blue-500/20 p-2 rounded-lg">
+                  <div className="bg-green-500/20 p-2 rounded-lg group-hover:bg-green-500/30 transition-colors">
+                    <Clock className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Live OPD</h3>
+                    <p className="text-xs text-blue-200">Real-time Queue</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-100 font-medium">
+                      KGMU Lucknow
+                    </span>
+                    <span className="font-bold text-white bg-orange-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
+                      45 Waiting
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-100 font-medium">Ursula</span>
+                    <span className="font-bold text-white bg-green-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
+                      12 Waiting
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-100 font-medium">
+                      LLR Hospital
+                    </span>
+                    <span className="font-bold text-white bg-blue-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
+                      Open
+                    </span>
+                  </div>
+                </div>
+
+                <button className="mt-auto w-full py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center justify-center gap-1 group-hover:border-white/20">
+                  View All Centers <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* 3. QUICK ACTIONS (Right Column Desktop, LAST on Mobile) */}
+            {!isEmergency && (
+              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group">
+                <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                  <div className="bg-blue-500/20 p-2 rounded-lg group-hover:bg-blue-500/30 transition-colors">
                     <List className="h-6 w-6 text-blue-300" />
                   </div>
                   <div>
@@ -408,9 +407,9 @@ export default function LandingPage() {
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => navigate("/labs/track")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-300 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-300 group-hover/btn:bg-orange-500 group-hover/btn:text-white transition-all">
                       <FileText size={16} />
                     </div>
                     <div className="flex-1">
@@ -421,9 +420,9 @@ export default function LandingPage() {
 
                   <button
                     onClick={() => setActiveTab("hospitals")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 group-hover:bg-green-500 group-hover:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 group-hover/btn:bg-green-500 group-hover/btn:text-white transition-all">
                       <Building size={16} />
                     </div>
                     <div className="flex-1">
@@ -434,9 +433,9 @@ export default function LandingPage() {
 
                   <button
                     onClick={() => setActiveTab("doctors")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 group-hover/btn:bg-purple-500 group-hover/btn:text-white transition-all">
                       <User size={16} />
                     </div>
                     <div className="flex-1">
@@ -451,44 +450,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. TRUST SECTION */}
+      {/* 3. TRUST SECTION (Kept clean white for contrast) */}
       {!isEmergency && (
         <section className="py-20 bg-white relative z-10">
           <div className="max-w-7xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold text-blue-900 mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 mb-12 tracking-tight">
               Why Bharat Trusts Us
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 hover:shadow-md transition-shadow">
-                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-                  <Shield size={28} />
+              <div className="p-8 bg-blue-50/50 rounded-3xl border border-blue-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600 shadow-sm">
+                  <Shield size={32} />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-blue-900">
+                <h3 className="font-bold text-xl mb-3 text-slate-800">
                   Govt Verified
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   Direct integration with KGMU and District Hospitals.
                 </p>
               </div>
-              <div className="p-8 bg-green-50 rounded-3xl border border-green-100 hover:shadow-md transition-shadow">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
-                  <CheckCircle size={28} />
+              <div className="p-8 bg-green-50/50 rounded-3xl border border-green-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-green-600 shadow-sm">
+                  <CheckCircle size={32} />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-green-900">
+                <h3 className="font-bold text-xl mb-3 text-slate-800">
                   Instant Booking
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   Skip the registration lines at OPD counters.
                 </p>
               </div>
-              <div className="p-8 bg-purple-50 rounded-3xl border border-purple-100 hover:shadow-md transition-shadow">
-                <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600">
-                  <MessageCircle size={28} />
+              <div className="p-8 bg-purple-50/50 rounded-3xl border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-purple-600 shadow-sm">
+                  <MessageCircle size={32} />
                 </div>
-                <h3 className="font-bold text-xl mb-3 text-purple-900">
+                <h3 className="font-bold text-xl mb-3 text-slate-800">
                   WhatsApp Support
                 </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   Get your token directly on WhatsApp.
                 </p>
               </div>
