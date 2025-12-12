@@ -17,11 +17,11 @@ import DoctorProfile from "./pages/DoctorProfile.jsx";
 import NotFound from "./components/NotFound.jsx";
 
 const AppContent = () => {
-  const location = useLocation();
-  const isHomePage = location.pathname === "/";
+  // Removed location check logic since you want transparency everywhere
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar transparent={isHomePage} />
+      {/* Navbar is always transparent now */}
+      <Navbar transparent={true} />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />

@@ -2,23 +2,17 @@ import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   MapPin,
-  Clock,
-  Star,
   ArrowLeft,
   Building,
-  Users,
-  Thermometer,
   Microscope,
   ArrowUpDown,
   Home,
-  CheckCircle,
   ChevronRight,
-  Activity,
-  Zap,
-  Droplet,
+  Star,
+  Search,
 } from "lucide-react";
 
-// --- 1. UPDATED MOCK DATA (Matches Landing Page Suggestions) ---
+// --- MOCK DATA ---
 const LABS_DATA = [
   {
     id: "l1",
@@ -29,7 +23,7 @@ const LABS_DATA = [
     homeCollection: true,
     tests: [
       { name: "CBC", price: 299 },
-      { name: "Complete Blood Count", price: 299 }, // Added Synonym
+      { name: "Complete Blood Count", price: 299 },
       { name: "Thyroid Profile", price: 550 },
       { name: "Lipid Profile", price: 600 },
       { name: "HbA1c", price: 450 },
@@ -79,7 +73,6 @@ const HOSPITAL_DATA = [
     queueStatus: "High",
     nextSlot: "OPD: 9 AM - 2 PM",
     facilities: ["Trauma Center", "Emergency", "Blood Bank", "Forensic"],
-    image: "bg-blue-100",
   },
   {
     id: "h2",
@@ -93,7 +86,6 @@ const HOSPITAL_DATA = [
     queueStatus: "Low",
     nextSlot: "24 Hours",
     facilities: ["ICU", "MRI", "Pvt Ward", "Pharmacy"],
-    image: "bg-purple-100",
   },
   {
     id: "h1",
@@ -107,7 +99,6 @@ const HOSPITAL_DATA = [
     queueStatus: "High",
     nextSlot: "OPD: 8 AM - 2 PM",
     facilities: ["X-Ray", "Emergency"],
-    image: "bg-green-100",
   },
   {
     id: "h4",
@@ -121,7 +112,6 @@ const HOSPITAL_DATA = [
     queueStatus: "Moderate",
     nextSlot: "OPD: 9 AM - 1 PM",
     facilities: ["Cath Lab", "ICU", "ECG"],
-    image: "bg-green-100",
   },
 ];
 
@@ -226,26 +216,22 @@ export default function SearchResultsPage() {
   // --- FILTERING LOGIC ---
   const getTestPrice = (lab) => {
     if (!query) return 0;
-
-    // Normalize strings for comparison
     const searchStr = query.toLowerCase();
-
     const test = lab.tests?.find((t) => {
       const testName = t.name.toLowerCase();
-      // Check 1: Does Lab Test contain Query? (e.g. Query: "Thyroid" -> Lab: "Thyroid Profile")
-      // Check 2: Does Query contain Lab Test? (e.g. Query: "Thyroid Profile (T3)" -> Lab: "Thyroid Profile")
       return testName.includes(searchStr) || searchStr.includes(testName);
     });
-
     return test ? test.price : 0;
   };
 
   const filteredResults = activeData
     .filter((item) => {
-      // 1. Tag/Category Filter
+      // 1. Tag/Category Filter (Safeguarded for Labs)
       if (categoryParam) {
         const cat = categoryParam.toLowerCase();
-        const keywords = item.specialties || [item.category];
+        // SAFEGUARD: Default to empty array if properties don't exist
+        const keywords =
+          item.specialties || (item.category ? [item.category] : []);
         const normalizedKeywords = keywords
           .map((k) => k.toLowerCase())
           .join(" ");
@@ -262,6 +248,7 @@ export default function SearchResultsPage() {
         };
 
         const targetKeyword = tagMap[cat] || cat;
+        // If keywords string is empty, it won't match, which is correct for Labs in Doctor categories
         if (!normalizedKeywords.includes(targetKeyword)) return false;
       }
 
@@ -269,7 +256,6 @@ export default function SearchResultsPage() {
       if (query) {
         const lowerQ = query.toLowerCase();
         const nameMatch = item.name.toLowerCase().includes(lowerQ);
-
         const testMatch =
           type === "labs" &&
           item.tests?.some((t) => {
@@ -280,15 +266,13 @@ export default function SearchResultsPage() {
         if (!nameMatch && !testMatch) return false;
       }
 
-      // 3. Type Filter (Govt/Pvt) - Only for Doctors/Hospitals
+      // 3. Type Filter
       if (type !== "labs" && filterType !== "all" && item.type !== filterType)
         return false;
 
       // 4. Lab Filters
       if (type === "labs") {
         if (showHomeCollectionOnly && !item.homeCollection) return false;
-        // Logic: If user searched for a TEST, hide labs that don't have it.
-        // If user searched for a LAB NAME (e.g. "Pathkind"), show it even if price is 0 (test not selected)
         const isLabNameSearch = item.name
           .toLowerCase()
           .includes(query.toLowerCase());
@@ -305,18 +289,31 @@ export default function SearchResultsPage() {
     });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-10 shadow-sm border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center space-x-4 max-w-3xl mx-auto">
+    // PT-24 to push content below Navbar
+    <div className="min-h-screen bg-blue-900 relative font-sans pt-24 pb-20">
+      {/* Background Pattern */}
+      <div
+        className="absolute inset-0 opacity-10 pointer-events-none fixed"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* --- PAGE HEADER & FILTERS --- */}
+      <div className="max-w-3xl mx-auto px-4 mb-6 relative z-10">
+        {/* Breadcrumb / Back Navigation */}
+        <div className="flex items-center space-x-3 mb-4">
           <button
             onClick={() => navigate("/")}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={20} />
           </button>
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-blue-900 capitalize">
+            <p className="text-xs text-blue-200 font-bold uppercase tracking-wide">
+              Search Results
+            </p>
+            <h1 className="text-2xl font-bold text-white capitalize truncate">
               {categoryParam
                 ? `${categoryParam} Specialists`
                 : query || `All ${type}`}
@@ -324,17 +321,16 @@ export default function SearchResultsPage() {
           </div>
         </div>
 
-        {/* --- FILTER TOGGLES --- */}
-        <div className="max-w-3xl mx-auto mt-4 flex items-center space-x-3 overflow-x-auto pb-1 hide-scrollbar">
+        {/* Filters Row */}
+        <div className="flex items-center space-x-3 overflow-x-auto pb-2 hide-scrollbar">
           {type === "labs" ? (
-            // Lab Filters
             <>
-              <div className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-                <ArrowUpDown size={14} className="text-gray-500" />
+              <div className="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 border border-white/10">
+                <ArrowUpDown size={14} className="text-blue-200" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                  className="bg-transparent text-sm font-medium text-white focus:outline-none cursor-pointer [&>option]:text-gray-900"
                 >
                   <option value="distance">Nearest First</option>
                   <option value="priceLow">Price: Low to High</option>
@@ -344,10 +340,10 @@ export default function SearchResultsPage() {
                 onClick={() =>
                   setShowHomeCollectionOnly(!showHomeCollectionOnly)
                 }
-                className={`px-4 py-1.5 rounded-full text-sm font-medium flex items-center space-x-2 transition-colors ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium flex items-center space-x-2 transition-colors border ${
                   showHomeCollectionOnly
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border border-gray-300 text-gray-700"
+                    ? "bg-orange-500 border-orange-500 text-white shadow-lg"
+                    : "bg-white/5 border-white/20 text-blue-100 hover:bg-white/10"
                 }`}
               >
                 <Home size={14} />
@@ -355,24 +351,23 @@ export default function SearchResultsPage() {
               </button>
             </>
           ) : (
-            // Doctor/Hospital Filters (Govt/Private)
             <>
               <button
                 onClick={() => setFilterType("all")}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
                   filterType === "all"
-                    ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-700"
+                    ? "bg-white text-blue-900 border-white shadow-lg"
+                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
                 }`}
               >
                 All
               </button>
               <button
                 onClick={() => setFilterType("govt")}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors border ${
                   filterType === "govt"
-                    ? "bg-green-600 text-white"
-                    : "bg-green-50 text-green-700 border border-green-200"
+                    ? "bg-green-500 text-white border-green-500 shadow-lg"
+                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
                 }`}
               >
                 <Building size={14} />
@@ -380,21 +375,22 @@ export default function SearchResultsPage() {
               </button>
               <button
                 onClick={() => setFilterType("private")}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors border ${
                   filterType === "private"
-                    ? "bg-purple-600 text-white"
-                    : "bg-purple-50 text-purple-700 border border-purple-200"
+                    ? "bg-purple-500 text-white border-purple-500 shadow-lg"
+                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
                 }`}
               >
                 <Star size={14} />
-                <span>Private / Fast</span>
+                <span>Private</span>
               </button>
             </>
           )}
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+      {/* --- RESULTS LIST --- */}
+      <div className="max-w-3xl mx-auto px-4 space-y-4 relative z-10">
         {filteredResults.map((item) => (
           <div
             key={item.id}
@@ -403,21 +399,22 @@ export default function SearchResultsPage() {
               else if (type === "labs") navigate(`/lab/${item.id}`);
               else navigate(`/doctor/${item.id}`);
             }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative"
+            className="bg-white rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5"
           >
-            {/* RENDER CARD CONTENT BASED ON TYPE */}
             <div className="flex">
-              {/* --- COLOR STRIPE FOR DOCTORS/HOSPITALS --- */}
-              {type !== "labs" && (
-                <div
-                  className={`w-1.5 ${
-                    item.type === "govt" ? "bg-green-500" : "bg-purple-500"
-                  }`}
-                ></div>
-              )}
+              {/* Color Stripe - ADDED ORANGE STRIPE FOR LABS */}
+              <div
+                className={`w-1.5 ${
+                  type === "labs"
+                    ? "bg-orange-500"
+                    : item.type === "govt"
+                    ? "bg-green-500"
+                    : "bg-purple-500"
+                }`}
+              ></div>
 
               <div className="p-4 flex-1 flex">
-                {/* Icon */}
+                {/* Icon Box */}
                 <div
                   className={`w-16 h-16 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 ${
                     type === "govt" ? "bg-green-50" : "bg-blue-50"
@@ -431,22 +428,24 @@ export default function SearchResultsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  {/* --- VISUAL BADGES (TAGS) --- */}
-                  {type !== "labs" && (
-                    <span
-                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                        item.type === "govt"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-purple-100 text-purple-700"
-                      }`}
-                    >
-                      {item.type === "govt"
-                        ? "Govt • Low Cost"
-                        : "Private • Verified"}
-                    </span>
-                  )}
+                  {/* Badge - ADDED BADGE FOR LABS */}
+                  <span
+                    className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                      type === "labs"
+                        ? "bg-orange-100 text-orange-700"
+                        : item.type === "govt"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    {type === "labs"
+                      ? "Diagnostics • Verified"
+                      : item.type === "govt"
+                      ? "Govt • Low Cost"
+                      : "Private • Verified"}
+                  </span>
 
-                  <h2 className="font-bold text-gray-900 truncate">
+                  <h2 className="font-bold text-gray-900 truncate text-lg">
                     {item.name}
                   </h2>
                   <p className="text-sm text-gray-600 flex items-center mt-0.5">
@@ -456,25 +455,27 @@ export default function SearchResultsPage() {
                   {/* Lab Specific Logic */}
                   {type === "labs" ? (
                     <div className="mt-2">
-                      {/* IF user searched for a TEST, show the price. IF user searched for LAB NAME, show "View Profile" */}
                       {query && getTestPrice(item) > 0 ? (
-                        <>
-                          <p className="text-[10px] text-gray-500 uppercase font-semibold mt-1">
+                        <div className="bg-green-50 inline-block px-3 py-1 rounded-lg border border-green-100">
+                          <p className="text-[10px] text-green-700 uppercase font-bold">
                             Best Price For {query}
                           </p>
-                          <span className="text-blue-800 font-bold text-lg">
+                          <span className="text-green-800 font-bold text-lg leading-tight">
                             ₹{getTestPrice(item)}
                           </span>
-                        </>
+                        </div>
                       ) : (
-                        <span className="text-orange-600 text-xs font-bold flex items-center mt-2">
-                          View Test List <ChevronRight size={14} />
+                        <span className="text-orange-600 text-xs font-bold flex items-center mt-2 group">
+                          View Test List{" "}
+                          <ChevronRight
+                            size={14}
+                            className="group-hover:translate-x-1 transition-transform"
+                          />
                         </span>
                       )}
                     </div>
                   ) : (
                     <div className="mt-2 flex gap-2 overflow-hidden">
-                      {/* Doctor/Hospital Specialties Pills */}
                       {item.specialties ? (
                         item.specialties.slice(0, 3).map((s) => (
                           <span
@@ -498,8 +499,14 @@ export default function SearchResultsPage() {
         ))}
 
         {filteredResults.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No results found.
+          <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
+            <div className="bg-white/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <Search size={32} className="text-blue-200" />
+            </div>
+            <h3 className="text-white text-xl font-bold">No results found</h3>
+            <p className="text-blue-200 mt-2">
+              Try adjusting your filters or search query.
+            </p>
           </div>
         )}
       </div>
