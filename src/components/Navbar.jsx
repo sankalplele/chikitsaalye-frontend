@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Home, LogIn, UserPlus, LayoutDashboard } from "lucide-react";
+import {
+  Menu,
+  X,
+  Home,
+  LogIn,
+  UserPlus,
+  LayoutDashboard,
+  CircleQuestionMark,
+} from "lucide-react";
 
 function Navbar({ transparent }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,6 +21,7 @@ function Navbar({ transparent }) {
     { path: "/login", label: "Login", icon: LogIn },
     { path: "/register", label: "Register", icon: UserPlus },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/forum", label: "Forum", icon: CircleQuestionMark },
   ];
 
   // Simplified Styles for Global Transparency
@@ -31,7 +40,7 @@ function Navbar({ transparent }) {
               <span className="font-bold text-lg">C</span>
             </div>
             <span className="text-xl font-bold tracking-tight text-white drop-shadow-md">
-              CHikitsaalye
+              Chikitsaalye
             </span>
           </Link>
 

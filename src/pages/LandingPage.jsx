@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -25,6 +25,9 @@ import {
   Droplet,
   Thermometer,
   Bone,
+  ArrowRight,
+  ThumbsUp,
+  ArrowDown, // Used for the scroll indicator
 } from "lucide-react";
 
 // --- SEARCH DATABASE ---
@@ -88,6 +91,72 @@ const SEARCH_DATABASE = [
   { id: "t1", name: "CBC", category: "Blood Test", kind: "test" },
 ];
 
+// --- MOCK FORUM HIGHLIGHTS DATA ---
+const FORUM_HIGHLIGHTS = [
+  {
+    id: "f1",
+    question:
+      "Is constant fatigue and slight hair fall a sign of thyroid issues?",
+    excerpt:
+      "While fatigue and hair fall are common signs of stress, they are also classic symptoms of hypothyroidism...",
+    doctor: {
+      name: "Dr. Priya Sharma",
+      specialty: "Endocrinologist, Delhi",
+      image: "https://randomuser.me/api/portraits/women/68.jpg",
+    },
+    topicImage:
+      "https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=200&h=200&fit=crop",
+    likes: 124,
+    answerCount: 5,
+  },
+  {
+    id: "f2",
+    question: "Can I take paracetamol on an empty stomach for sudden fever?",
+    excerpt:
+      "It is generally advised not to take painkillers like paracetamol on a completely empty stomach...",
+    doctor: {
+      name: "Dr. Arun Kumar",
+      specialty: "General Physician, Mumbai",
+      image: "https://randomuser.me/api/portraits/men/32.jpg",
+    },
+    topicImage:
+      "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&h=200&fit=crop",
+    likes: 89,
+    answerCount: 3,
+  },
+  {
+    id: "f3",
+    question:
+      "What are early warning signs of high blood sugar in pre-diabetics?",
+    excerpt:
+      "Look out for increased thirst (polydipsia), frequent urination (polyuria), especially at night...",
+    doctor: {
+      name: "Dr. K. Verma",
+      specialty: "Diabetologist, Lucknow",
+      image: "https://randomuser.me/api/portraits/men/54.jpg",
+    },
+    topicImage:
+      "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=200&h=200&fit=crop",
+    likes: 210,
+    answerCount: 8,
+  },
+  {
+    id: "f4",
+    question: "Severe lower back pain after lifting heavy weights at the gym.",
+    excerpt:
+      "This sounds like a potential muscle strain or a lumbar disc issue. Apply ice immediately...",
+    doctor: {
+      name: "Dr. S. Singh",
+      specialty: "Orthopedic Surgeon, Kanpur",
+      image: "https://randomuser.me/api/portraits/men/22.jpg",
+    },
+    topicImage:
+      "https://images.unsplash.com/photo-1609741198262-395037749c2d?w=200&h=200&fit=crop",
+    likes: 156,
+    answerCount: 4,
+  },
+];
+
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("doctors");
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,6 +164,8 @@ export default function LandingPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const navigate = useNavigate();
+
+  const forumRef = useRef(null);
 
   // Search Logic
   useEffect(() => {
@@ -121,6 +192,13 @@ export default function LandingPage() {
     navigate(`/search?type=${activeTab}&q=${searchQuery}`);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+      setShowSuggestions(false);
+    }
+  };
+
   const handleSuggestionClick = (item) => {
     if (item.kind === "doctor") navigate(`/doctor/${item.id}`);
     else if (item.kind === "hospital") navigate(`/hospital/${item.id}`);
@@ -137,7 +215,10 @@ export default function LandingPage() {
     return <Microscope size={18} />;
   };
 
-  // --- DYNAMIC CATEGORIES BASED ON TAB ---
+  const scrollToForum = () => {
+    forumRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const CATEGORIES = {
     doctors: [
       { icon: Stethoscope, label: "General", id: "general" },
@@ -169,16 +250,18 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen font-sans overflow-x-hidden w-full relative bg-gray-50"
+      className={`min-h-screen font-sans overflow-x-hidden w-full relative ${
+        isEmergency ? "bg-red-50" : "bg-gray-50"
+      }`}
       onClick={() => setShowSuggestions(false)}
     >
       {/* 1. HERO SECTION */}
       <section
-        className={`relative min-h-screen flex flex-col justify-center items-center px-4 py-6 overflow-hidden transition-colors duration-500 pt-28 lg:pt-0 ${
-          isEmergency ? "bg-red-50" : "bg-blue-900"
+        className={`relative flex min-h-screen flex-col justify-center items-center px-4 py-6 overflow-visible transition-colors duration-500 ${
+          isEmergency ? "bg-red-50 pt-20" : "bg-blue-900 pt-32 pb-20"
         }`}
       >
-        {/* Background Pattern Only */}
+        {/* Background Pattern */}
         {!isEmergency && (
           <div
             className="absolute inset-0 opacity-10 pointer-events-none z-0"
@@ -227,17 +310,15 @@ export default function LandingPage() {
           </p>
 
           {/* --- RESPONSIVE GRID LAYOUT --- */}
-          <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left relative z-20">
             {/* 1. SEARCH SECTION (Middle Column on Desktop, FIRST on Mobile) */}
             <div className="flex flex-col gap-4 w-full order-1 lg:order-2 relative z-50">
-              {" "}
-              {/* Increased Z-Index here */}
               {/* A. SEARCH BAR */}
               <div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20 z-50" // Explicit Z-50
+                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20 z-50"
                 onClick={(e) => e.stopPropagation()}
+                style={{ zIndex: 50 }}
               >
-                {/* Tabs */}
                 {!isEmergency && (
                   <div className="flex gap-1 mb-2 bg-gray-100/50 p-1 rounded-xl relative z-10">
                     {["doctors", "hospitals", "labs"].map((tab) => (
@@ -272,6 +353,7 @@ export default function LandingPage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder={
                         isEmergency ? "Location..." : `Search ${activeTab}...`
                       }
@@ -281,9 +363,12 @@ export default function LandingPage() {
                       }
                     />
 
-                    {/* SUGGESTIONS DROPDOWN - FIXED Z-INDEX */}
+                    {/* SUGGESTIONS DROPDOWN */}
                     {showSuggestions && !isEmergency && (
-                      <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[100] max-h-[300px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div
+                        className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200"
+                        style={{ zIndex: 9999 }}
+                      >
                         {suggestions.length > 0 ? (
                           suggestions.map((item) => (
                             <div
@@ -326,10 +411,13 @@ export default function LandingPage() {
                   </button>
                 </div>
               </div>
-              {/* B. DYNAMIC CATEGORIES (Also part of main flow on mobile) */}
-              {/* Lower Z-Index (0 or default) so dropdown (z-100) covers it */}
+
+              {/* B. DYNAMIC CATEGORIES */}
               {!isEmergency && (
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative z-0">
+                <div
+                  className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative"
+                  style={{ zIndex: 0 }}
+                >
                   {currentCategories.map((cat) => (
                     <button
                       key={cat.id}
@@ -349,12 +437,15 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* 2. LIVE OPD (Left Column Desktop, SECOND on Mobile) */}
+            {/* 2. LIVE OPD */}
             {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative z-0">
+              <div
+                className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative"
+                style={{ zIndex: 0 }}
+              >
                 <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                  <div className="bg-green-500/20 p-2 rounded-lg group-hover:bg-green-500/30 transition-colors">
-                    <Clock className="h-6 w-6 text-green-400" />
+                  <div className="bg-green-500/20 p-2 rounded-lg group-hover:bg-green-500/30 transition-colors animate-pulse">
+                    <Clock className="h-6 w-6 text-green-400 " />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white">Live OPD</h3>
@@ -393,9 +484,12 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* 3. QUICK ACTIONS (Right Column Desktop, LAST on Mobile) */}
+            {/* 3. QUICK ACTIONS */}
             {!isEmergency && (
-              <div className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative z-0">
+              <div
+                className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative"
+                style={{ zIndex: 0 }}
+              >
                 <div className="flex items-center gap-3 border-b border-white/10 pb-3">
                   <div className="bg-blue-500/20 p-2 rounded-lg group-hover:bg-blue-500/30 transition-colors">
                     <List className="h-6 w-6 text-blue-300" />
@@ -449,18 +543,130 @@ export default function LandingPage() {
               </div>
             )}
           </div>
+
+          {/* === 4. NEW CENTRAL SCROLL-TO-FORUM BUTTON (FILLING THE SPACE) === */}
+          {!isEmergency && (
+            <div className="mt-12 mb-6 animate-bounce">
+              <button
+                onClick={scrollToForum}
+                className="flex flex-col items-center text-blue-200 hover:text-white transition-colors gap-2 group"
+              >
+                <span className="text-sm font-semibold tracking-widest uppercase opacity-80 group-hover:opacity-100">
+                  Browse Health Questions
+                </span>
+                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-sm group-hover:bg-white/20 transition-all">
+                  <ArrowDown size={20} className="text-white" />
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* 3. TRUST SECTION */}
+      {/* HEALTH FORUM / BLOG HIGHLIGHTS */}
       {!isEmergency && (
-        <section className="py-20 bg-white relative z-10">
+        <section
+          ref={forumRef}
+          className="py-16 bg-white relative z-10 border-b border-gray-100"
+        >
+          <div className="max-w-7xl mx-auto px-4">
+            {/* Section Header */}
+            <div className="flex justify-between items-end mb-10">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                  Health Questions & Answers
+                </h2>
+                <p className="text-gray-600 text-lg">
+                  Real questions answered by verified doctors.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/forum")}
+                className="hidden md:flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-800 transition-colors"
+              >
+                View all questions <ArrowRight size={20} />
+              </button>
+            </div>
+
+            {/* Forum Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {FORUM_HIGHLIGHTS.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => navigate(`/forum/question/${item.id}`)}
+                >
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 leading-snug group-hover:text-blue-700 transition-colors">
+                    {item.question}
+                  </h3>
+
+                  <div className="flex justify-between items-start gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={item.doctor.image}
+                        alt={item.doctor.name}
+                        className="w-10 h-10 rounded-full border-2 border-blue-50 object-cover"
+                      />
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {item.doctor.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {item.doctor.specialty}
+                        </p>
+                      </div>
+                    </div>
+                    <img
+                      src={item.topicImage}
+                      alt="Topic"
+                      className="w-20 h-20 rounded-xl object-cover shadow-sm hidden sm:block"
+                    />
+                  </div>
+
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                    "{item.excerpt}"
+                  </p>
+
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <ThumbsUp size={16} className="text-blue-500" />{" "}
+                        {item.likes}
+                      </span>
+                      <span>
+                        {item.answerCount}{" "}
+                        {item.answerCount === 1 ? "Answer" : "Answers"}
+                      </span>
+                    </div>
+                    <span className="text-blue-600 font-semibold text-sm flex items-center gap-1 group-hover:underline">
+                      Read Full Answer <ChevronRight size={16} />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 md:hidden">
+              <button
+                onClick={() => navigate("/forum")}
+                className="w-full py-3 bg-blue-50 text-blue-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
+              >
+                View all questions <ArrowRight size={20} />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* TRUST SECTION */}
+      {!isEmergency && (
+        <section className="py-20 bg-gray-50 relative z-10">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold text-slate-900 mb-12 tracking-tight">
               Why Bharat Trusts Us
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="p-8 bg-blue-50/50 rounded-3xl border border-blue-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="p-8 bg-white rounded-3xl border border-blue-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-600 shadow-sm">
                   <Shield size={32} />
                 </div>
@@ -471,7 +677,7 @@ export default function LandingPage() {
                   Direct integration with KGMU and District Hospitals.
                 </p>
               </div>
-              <div className="p-8 bg-green-50/50 rounded-3xl border border-green-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="p-8 bg-white rounded-3xl border border-green-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-green-600 shadow-sm">
                   <CheckCircle size={32} />
                 </div>
@@ -482,7 +688,7 @@ export default function LandingPage() {
                   Skip the registration lines at OPD counters.
                 </p>
               </div>
-              <div className="p-8 bg-purple-50/50 rounded-3xl border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <div className="p-8 bg-white rounded-3xl border border-purple-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-purple-600 shadow-sm">
                   <MessageCircle size={32} />
                 </div>

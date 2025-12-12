@@ -199,12 +199,8 @@ export default function RegisterPage() {
 
       {/* Changed max-w-md to max-w-2xl for wider 2-column layout */}
       <div className="w-full max-w-2xl relative z-10">
-        <div className="text-center mb-6">
-          <p className="text-blue-200 text-lg">Health Services for Bharat</p>
-        </div>
-
         {/* Registration Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border-4 border-white/10">
+        <div className="bg-white rounded-3xl shadow-2xl mt-16 p-6 md:p-8 border-4 border-white/10">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               Create Account

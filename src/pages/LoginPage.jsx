@@ -98,21 +98,8 @@ export default function LoginPage() {
       </button>*/}
 
       <div className="w-full max-w-md relative z-10">
-        {/* Header Logo - Updated Text Colors for Dark Background */}
-        <div className="text-center mb-8">
-          {/*<div className="inline-flex items-center space-x-3 mb-4">
-            <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-blue-900 font-extrabold text-2xl">C</span>
-            </div>
-            <span className="text-3xl font-bold text-white tracking-tight">
-              CHikitsaalye
-            </span>
-          </div>*/}
-          <p className="text-blue-200 text-lg">Health Services for Bharat</p>
-        </div>
-
         {/* Login Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-white/10">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 mt-12 border-white/10">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome Back
