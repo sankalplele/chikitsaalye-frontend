@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+// 1. Import the hook we created
+import { useLocationContext } from "../context/LocationContext";
 import {
   Search,
   Clock,
@@ -10,14 +12,12 @@ import {
   Microscope,
   TestTube,
   Shield,
-  CheckCircle,
   Stethoscope,
   Heart,
   Activity,
   Smile,
   Eye,
   Baby,
-  MessageCircle,
   ChevronRight,
   FileText,
   List,
@@ -25,15 +25,13 @@ import {
   Droplet,
   Thermometer,
   Bone,
-  ArrowRight,
-  ThumbsUp,
   ArrowDown,
   MapPin,
   Loader2,
   Navigation,
 } from "lucide-react";
 
-// ... [KEEP YOUR SEARCH_DATABASE AND FORUM_HIGHLIGHTS ARRAYS EXACTLY AS THEY ARE] ...
+// ... [KEEP YOUR SEARCH_DATABASE ARRAY EXACTLY AS IT WAS] ...
 const SEARCH_DATABASE = [
   {
     id: "d1",
@@ -76,26 +74,28 @@ const SEARCH_DATABASE = [
     kind: "lab",
   },
 ];
-const FORUM_HIGHLIGHTS = [
-  /* ... keep existing data ... */
-];
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("doctors");
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState(""); // Stores text for location input
+
+  // --- CONTEXT CHANGE START ---
+  // Instead of useState, we pull these from the Context
+  const { userLocation, setUserLocation, locationQuery, setLocationQuery } =
+    useLocationContext();
+  // --- CONTEXT CHANGE END ---
+
   const [isEmergency, setIsEmergency] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Location State
-  const [userLocation, setUserLocation] = useState(null); // Stores { lat, lon }
+  // Local UI state (does not need to be global)
   const [isLocating, setIsLocating] = useState(false);
-  const [locationError, setLocationError] = useState(false); // For visual validation shake
+  const [locationError, setLocationError] = useState(false);
 
   const navigate = useNavigate();
   const forumRef = useRef(null);
-  const locationInputRef = useRef(null); // Ref to focus location box
+  const locationInputRef = useRef(null);
 
   // --- 1. GET LOCATION FUNCTION ---
   const getUserLocation = () => {
@@ -106,15 +106,15 @@ export default function LandingPage() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          // This now updates the Global Context, not local state
           setUserLocation({ lat: latitude, lon: longitude });
-          setLocationQuery("Current Location (Detected)"); // Visual feedback in input
+          setLocationQuery("Current Location (Detected)");
           setIsLocating(false);
         },
         (error) => {
           console.error("Error getting location:", error);
           alert("Could not access location. Please enable permissions.");
           setIsLocating(false);
-          // Focus the input so they can type manually if needed (though we need coords for your API)
           locationInputRef.current?.focus();
         }
       );
@@ -125,31 +125,25 @@ export default function LandingPage() {
   };
 
   // --- 2. MAIN NAVIGATION HANDLER ---
-  // This handles both Search Button clicks AND Category Button clicks
   const executeSearch = (overrideService = null) => {
     if (isEmergency) return alert("Connecting to 108...");
 
     // VALIDATION: If no coordinates are set, block entry and focus location
     if (!userLocation) {
-      setLocationError(true); // Triggers red border/shake
+      setLocationError(true);
       locationInputRef.current?.focus();
-      // Optional: Show a toast or small alert
-      // alert("Please detect your location to find nearby services.");
       return;
     }
 
     const params = new URLSearchParams();
 
-    // 1. Service Param (Either the clicked category or the typed search query)
     const serviceValue = overrideService || searchQuery || activeTab;
     params.set("service", serviceValue);
 
-    // 2. Location Params
     params.set("lat", userLocation.lat);
     params.set("lon", userLocation.lon);
-    params.set("max_distance", "10000"); // 10km radius default
+    params.set("max_distance", "10000");
 
-    // 3. Type Param (Internal routing helper)
     params.set("type", activeTab);
 
     navigate(`/search?${params.toString()}`);
@@ -162,11 +156,9 @@ export default function LandingPage() {
     }
   };
 
-  // Wrappers for specific clicks
   const handleSearchBtnClick = () => executeSearch();
 
   const handleCategoryClick = (catId) => {
-    // Pass the category ID (e.g., 'cardiologist') as the service
     executeSearch(catId);
   };
 
@@ -191,9 +183,6 @@ export default function LandingPage() {
   }, [searchQuery, isEmergency, activeTab]);
 
   const handleSuggestionClick = (item) => {
-    // If user clicks a specific suggestion, we still need location?
-    // Usually yes, but if it's a specific ID, maybe not.
-    // adhering to your rule: "if I click... I am asked to choose location"
     if (!userLocation) {
       setLocationError(true);
       locationInputRef.current?.focus();
@@ -216,30 +205,31 @@ export default function LandingPage() {
     forumRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // --- UPDATED CATEGORIES CONFIGURATION ---
   const CATEGORIES = {
     doctors: [
-      { icon: Stethoscope, label: "General", id: "general" },
-      { icon: Baby, label: "Women", id: "gynae" },
-      { icon: Heart, label: "Heart", id: "cardio" },
-      { icon: Bone, label: "Bone", id: "ortho" },
-      { icon: Smile, label: "Dental", id: "dental" },
-      { icon: Eye, label: "Eye", id: "eye" },
+      { icon: Stethoscope, label: "General", id: "GENERAL_PHYSICIAN" },
+      { icon: Baby, label: "Women", id: "GYNAECOLOGY" },
+      { icon: Heart, label: "Heart", id: "CARDIOLOGY" },
+      { icon: Bone, label: "Bone", id: "ORTHOPEDICS" },
+      { icon: Smile, label: "Dental", id: "DENTISTRY" },
+      { icon: Eye, label: "Eye", id: "OPHTHALMOLOGY" },
     ],
     hospitals: [
-      { icon: Building, label: "Govt", id: "govt" },
-      { icon: Shield, label: "Private", id: "private" },
-      { icon: Activity, label: "Trauma", id: "trauma" },
-      { icon: Heart, label: "Heart Inst", id: "cardio_center" },
-      { icon: Baby, label: "Maternity", id: "maternity" },
-      { icon: Eye, label: "Eye Center", id: "eye_center" },
+      { icon: Building, label: "Multispeciality", id: "MULTISPECIALITY" },
+      { icon: Smile, label: "Dental Clinic", id: "DENTAL_CLINIC" },
+      { icon: Activity, label: "Trauma Center", id: "TRAUMA" },
+      { icon: Heart, label: "Heart Inst", id: "CARDIOLOGY_CENTER" },
+      { icon: Baby, label: "Maternity", id: "MATERNITY_HOME" },
+      { icon: Eye, label: "Eye Center", id: "EYE_HOSPITAL" },
     ],
     labs: [
-      { icon: Thermometer, label: "Thyroid", id: "thyroid" },
-      { icon: TestTube, label: "CBC", id: "cbc" },
-      { icon: Scan, label: "MRI / CT", id: "mri" },
-      { icon: Bone, label: "X-Ray", id: "xray" },
-      { icon: Droplet, label: "Diabetes", id: "diabetes" },
-      { icon: User, label: "Full Body", id: "fullbody" },
+      { icon: Thermometer, label: "Thyroid", id: "THYROID" },
+      { icon: TestTube, label: "CBC", id: "CBC" },
+      { icon: Scan, label: "MRI / CT", id: "MRI_CT" },
+      { icon: Bone, label: "X-Ray", id: "XRAY" },
+      { icon: Droplet, label: "Diabetes", id: "DIABETES" },
+      { icon: User, label: "Full Body", id: "FULL_BODY_CHECKUP" },
     ],
   };
 
@@ -348,7 +338,8 @@ export default function LandingPage() {
                     <input
                       ref={locationInputRef}
                       type="text"
-                      readOnly // Making it read-only emphasizes utilizing the detection button, but you can allow typing if you have geocoding
+                      readOnly
+                      // Value comes from Context now
                       value={locationQuery}
                       placeholder="Select Location"
                       className={`w-full pl-10 pr-10 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border rounded-xl focus:bg-white outline-none transition-all ${
@@ -400,7 +391,7 @@ export default function LandingPage() {
                       }
                     />
 
-                    {/* Suggestions Dropdown (Same as before) */}
+                    {/* Suggestions Dropdown */}
                     {showSuggestions && !isEmergency && (
                       <div
                         className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto"
@@ -601,7 +592,6 @@ export default function LandingPage() {
           className="py-16 bg-white relative z-10 border-b border-gray-100"
         >
           <div className="max-w-7xl mx-auto px-4">
-            {/* [YOUR EXISTING FORUM CODE GOES HERE - REMOVED FOR BREVITY BUT KEEP IT IN YOUR FILE] */}
             <div className="text-center text-gray-400 py-10">
               <h3 className="text-xl">Health Questions Section</h3>
               <p>(Content from previous code)</p>
@@ -613,7 +603,6 @@ export default function LandingPage() {
       {/* TRUST SECTION */}
       {!isEmergency && (
         <section className="py-20 bg-gray-50 relative z-10">
-          {/* [YOUR EXISTING TRUST SECTION GOES HERE] */}
           <div className="text-center text-gray-400 py-10">
             <h3 className="text-xl">Trust Section</h3>
             <p>(Content from previous code)</p>

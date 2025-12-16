@@ -10,8 +10,8 @@ import {
   ChevronRight,
   Star,
   Search,
-  Loader2, // Added for loading state
-  Phone, // Added for call action
+  Loader2,
+  Phone,
 } from "lucide-react";
 
 export default function SearchResultsPage() {
@@ -19,12 +19,11 @@ export default function SearchResultsPage() {
   const navigate = useNavigate();
 
   // --- URL PARAMS ---
-  // These are the params your landing page sends
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
-  const service = searchParams.get("service"); // This acts as the search query/category
-  const maxDistance = searchParams.get("max_distance") || "10000"; // Default 10km
-  const typeParam = searchParams.get("type") || "hospitals"; // fallback type for UI styling
+  const service = searchParams.get("service");
+  const maxDistance = searchParams.get("max_distance") || "10000";
+  const typeParam = searchParams.get("type") || "hospitals";
 
   // --- STATE ---
   const [results, setResults] = useState([]);
@@ -32,17 +31,15 @@ export default function SearchResultsPage() {
   const [error, setError] = useState(null);
 
   // --- LOCAL UI FILTERS ---
-  const [filterType, setFilterType] = useState("all"); // 'all', 'govt', 'private'
+  const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("distance");
   const [showHomeCollectionOnly, setShowHomeCollectionOnly] = useState(false);
 
   // --- FETCH DATA FROM BACKEND ---
   useEffect(() => {
     const fetchClinics = async () => {
-      // 1. Validation: Ensure we have location data
       if (!lat || !lon) {
         setLoading(false);
-        // Optional: Set an error or redirect if location is missing
         return;
       }
 
@@ -50,12 +47,7 @@ export default function SearchResultsPage() {
       setError(null);
 
       try {
-        // 2. Construct API URL
-        // Endpoint: https://backend-7-dzo3.onrender.com/clinics/search/
-        const apiUrl = `/api/clinics/search/?service=${encodeURIComponent(
-          service || ""
-        )}&lat=${lat}&lon=${lon}&max_distance=${maxDistance}`;
-
+        const apiUrl = `/api/clinics/search/?service=cardiology&lat=${lat}&lon=${lon}&max_distance=${maxDistance}`;
         console.log("Fetching:", apiUrl);
 
         const response = await fetch(apiUrl);
@@ -65,7 +57,18 @@ export default function SearchResultsPage() {
         }
 
         const data = await response.json();
-        setResults(data);
+        console.log("API Data received:", data);
+
+        // --- FIX 1: Extract the array from the object ---
+        // Your API returns { results: [...] }, so we grab data.results
+        if (data.results && Array.isArray(data.results)) {
+          setResults(data.results);
+        } else if (Array.isArray(data)) {
+          setResults(data);
+        } else {
+          // Fallback if data format changes unexpectedly
+          setResults([]);
+        }
       } catch (err) {
         console.error("API Error:", err);
         setError("Unable to find services. Please check your connection.");
@@ -79,29 +82,34 @@ export default function SearchResultsPage() {
 
   // --- FILTERING & SORTING LOGIC ---
 
-  // Helper to safely get price (Backend might not return individual test prices yet)
-  const getTestPrice = (item) => {
-    // If backend doesn't provide 'tests' array yet, return 0
-    if (!item.tests || !service) return 0;
+  // Helper to safely get price
+  const getDisplayPrice = (item) => {
+    // Check if API returns a direct price (string or number)
+    if (item.price) return parseFloat(item.price);
 
-    const searchStr = service.toLowerCase();
-    const test = item.tests.find((t) => {
-      const testName = t.name.toLowerCase();
-      return testName.includes(searchStr) || searchStr.includes(testName);
-    });
-    return test ? test.price : 0;
+    // Fallback: Check inside 'tests' array if it exists (old logic)
+    if (item.tests && service) {
+      const searchStr = service.toLowerCase();
+      const test = item.tests.find((t) => {
+        const testName = t.name.toLowerCase();
+        return testName.includes(searchStr) || searchStr.includes(testName);
+      });
+      return test ? test.price : 0;
+    }
+    return 0;
   };
 
-  const filteredResults = results
+  // --- FIX 2: Defensive check for filtering ---
+  const filteredResults = (Array.isArray(results) ? results : [])
     .filter((item) => {
       // 1. Type Filter (Govt vs Private)
-      // Assuming backend returns 'type' field. If not, this filter is skipped.
       if (
         filterType !== "all" &&
         item.type &&
         item.type.toLowerCase() !== filterType
-      )
+      ) {
         return false;
+      }
 
       // 2. Lab Specific Filters
       if (typeParam === "labs") {
@@ -113,11 +121,13 @@ export default function SearchResultsPage() {
     .sort((a, b) => {
       // 1. Sort by Price
       if (typeParam === "labs" && sortBy === "priceLow") {
-        return getTestPrice(a) - getTestPrice(b);
+        return getDisplayPrice(a) - getDisplayPrice(b);
       }
-      // 2. Sort by Distance (Default) - Assuming backend might not sort perfectly
-      // (This assumes the API returns a 'distance' field, if not, we skip sort)
-      // Note: Usually geo-queries return data sorted by distance automatically.
+      // 2. Sort by Distance
+      // Your API returns 'distance_km', let's use that if available
+      if (a.distance_km && b.distance_km) {
+        return a.distance_km - b.distance_km;
+      }
       return 0;
     });
 
@@ -146,7 +156,6 @@ export default function SearchResultsPage() {
 
       {/* --- PAGE HEADER & FILTERS --- */}
       <div className="max-w-3xl mx-auto px-4 mb-6 relative z-10">
-        {/* Breadcrumb / Back Navigation */}
         <div className="flex items-center space-x-3 mb-4">
           <button
             onClick={() => navigate("/")}
@@ -214,7 +223,7 @@ export default function SearchResultsPage() {
                 }`}
               >
                 <Building size={14} />
-                <span>Sarkari / Free</span>
+                <span>Government</span>
               </button>
               <button
                 onClick={() => setFilterType("private")}
@@ -234,27 +243,24 @@ export default function SearchResultsPage() {
 
       {/* --- RESULTS LIST --- */}
       <div className="max-w-3xl mx-auto px-4 space-y-4 relative z-10">
-        {/* Error Display */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
             <p className="text-red-600 font-medium">{error}</p>
           </div>
         )}
 
-        {/* Results Map */}
         {!error &&
           filteredResults.map((item, index) => (
             <div
-              // Use _id from backend or index as fallback
-              key={item._id || index}
+              // --- FIX 3: Use 'id' (API uses 'id', your old code used '_id') ---
+              key={item.id || index}
               onClick={() => {
-                // Navigating to detail page (ensure these routes exist or handle accordingly)
-                navigate(`/${typeParam.slice(0, -1)}/${item._id}`);
+                navigate(`/${typeParam.slice(0, -1)}/${item.id}`);
               }}
               className="bg-white rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5"
             >
               <div className="flex">
-                {/* Color Stripe based on Type */}
+                {/* Color Stripe */}
                 <div
                   className={`w-1.5 ${
                     typeParam === "labs"
@@ -297,24 +303,34 @@ export default function SearchResultsPage() {
                         : "Private • Verified"}
                     </span>
 
+                    {/* --- FIX 4: Mapped correct API fields (hospital_name) --- */}
                     <h2 className="font-bold text-gray-900 truncate text-lg">
-                      {item.name || "Unknown Clinic"}
+                      {item.hospital_name || item.name || "Unknown Clinic"}
                     </h2>
+
+                    {/* --- FIX 5: Mapped correct API fields (hospital_address) --- */}
                     <p className="text-sm text-gray-600 flex items-center mt-0.5 truncate">
                       <MapPin size={12} className="mr-1 flex-shrink-0" />
-                      {item.address || item.location || "Address not provided"}
+                      {item.hospital_address ||
+                        item.address ||
+                        "Address not provided"}
+                      {item.distance_km && (
+                        <span className="ml-2 text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100">
+                          {item.distance_km} km away
+                        </span>
+                      )}
                     </p>
 
-                    {/* Lab Specific Logic (Price Display) */}
+                    {/* Lab/Service Specific Logic */}
                     {typeParam === "labs" ? (
                       <div className="mt-2">
-                        {service && getTestPrice(item) > 0 ? (
+                        {service && getDisplayPrice(item) > 0 ? (
                           <div className="bg-green-50 inline-block px-3 py-1 rounded-lg border border-green-100">
                             <p className="text-[10px] text-green-700 uppercase font-bold">
                               Estimated Price
                             </p>
                             <span className="text-green-800 font-bold text-lg leading-tight">
-                              ₹{getTestPrice(item)}
+                              ₹{getDisplayPrice(item)}
                             </span>
                           </div>
                         ) : (
@@ -328,8 +344,8 @@ export default function SearchResultsPage() {
                         )}
                       </div>
                     ) : (
-                      // Hospital/Doctor Tags
                       <div className="mt-2 flex gap-2 overflow-hidden flex-wrap">
+                        {/* If API returns specialties list */}
                         {item.specialties && item.specialties.length > 0 ? (
                           item.specialties.slice(0, 3).map((s, i) => (
                             <span
@@ -340,8 +356,19 @@ export default function SearchResultsPage() {
                             </span>
                           ))
                         ) : (
+                          // Fallback to service name if available
                           <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600">
-                            {item.category || service || "General"}
+                            {item.service_name ||
+                              item.category ||
+                              service ||
+                              "General"}
+                          </span>
+                        )}
+
+                        {/* If direct price is available for the service */}
+                        {item.price && (
+                          <span className="text-[10px] bg-green-100 px-2 py-1 rounded text-green-700 font-bold border border-green-200">
+                            Starts ₹{item.price}
                           </span>
                         )}
                       </div>
