@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-// 1. Import the hook we created
 import { useLocationContext } from "../context/LocationContext";
 import {
   Search,
@@ -31,7 +30,7 @@ import {
   Navigation,
 } from "lucide-react";
 
-// ... [KEEP YOUR SEARCH_DATABASE ARRAY EXACTLY AS IT WAS] ...
+// Keep Doctors and Labs here, but we will fetch Hospitals from API
 const SEARCH_DATABASE = [
   {
     id: "d1",
@@ -58,14 +57,6 @@ const SEARCH_DATABASE = [
     kind: "doctor",
   },
   {
-    id: "h1",
-    name: "Ursula Hospital",
-    type: "govt",
-    category: "General Hospital",
-    rating: 4.0,
-    kind: "hospital",
-  },
-  {
     id: "l1",
     name: "Dr. Lal PathLabs",
     type: "private",
@@ -76,20 +67,27 @@ const SEARCH_DATABASE = [
 ];
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState("doctors");
+  // --- MODIFICATION START: Initialize state from Session Storage or Default to 'hospitals' ---
+  const [activeTab, setActiveTab] = useState(() => {
+    // Check if a tab was previously selected in this session
+    const savedTab = sessionStorage.getItem("selectedSearchTab");
+    // Return saved tab, OR default to "hospitals" if null
+    return savedTab || "hospitals";
+  });
+  // --- MODIFICATION END ---
+
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- CONTEXT CHANGE START ---
-  // Instead of useState, we pull these from the Context
   const { userLocation, setUserLocation, locationQuery, setLocationQuery } =
     useLocationContext();
-  // --- CONTEXT CHANGE END ---
 
   const [isEmergency, setIsEmergency] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Local UI state (does not need to be global)
+  // New State for API Hospitals
+  const [apiHospitals, setApiHospitals] = useState([]);
+
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState(false);
 
@@ -97,7 +95,43 @@ export default function LandingPage() {
   const forumRef = useRef(null);
   const locationInputRef = useRef(null);
 
-  // --- 1. GET LOCATION FUNCTION ---
+  // --- MODIFICATION START: Save activeTab to storage whenever it changes ---
+  useEffect(() => {
+    sessionStorage.setItem("selectedSearchTab", activeTab);
+  }, [activeTab]);
+  // --- MODIFICATION END ---
+
+  // --- 1. FETCH HOSPITALS FROM API ---
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      try {
+        const response = await fetch("/api/clinics/get_all_clinics/");
+        if (response.ok) {
+          const data = await response.json();
+
+          // Map API data to the format your UI expects
+          const formattedHospitals = data.map((clinic) => ({
+            id: clinic.id || clinic._id,
+            name: clinic.name || clinic.hospital_name,
+            type: clinic.type || "private",
+            category: clinic.category || "General Hospital",
+            rating: clinic.rating || 4.0,
+            kind: "hospital",
+          }));
+
+          setApiHospitals(formattedHospitals);
+        } else {
+          console.error("Failed to fetch clinics");
+        }
+      } catch (error) {
+        console.error("Error fetching hospitals:", error);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
+
+  // --- 2. GET LOCATION FUNCTION ---
   const getUserLocation = () => {
     setIsLocating(true);
     setLocationError(false);
@@ -106,7 +140,6 @@ export default function LandingPage() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          // This now updates the Global Context, not local state
           setUserLocation({ lat: latitude, lon: longitude });
           setLocationQuery("Current Location (Detected)");
           setIsLocating(false);
@@ -124,11 +157,10 @@ export default function LandingPage() {
     }
   };
 
-  // --- 2. MAIN NAVIGATION HANDLER ---
+  // --- 3. MAIN NAVIGATION HANDLER ---
   const executeSearch = (overrideService = null) => {
     if (isEmergency) return alert("Connecting to 108...");
 
-    // VALIDATION: If no coordinates are set, block entry and focus location
     if (!userLocation) {
       setLocationError(true);
       locationInputRef.current?.focus();
@@ -136,14 +168,11 @@ export default function LandingPage() {
     }
 
     const params = new URLSearchParams();
-
     const serviceValue = overrideService || searchQuery || activeTab;
     params.set("service", serviceValue);
-
     params.set("lat", userLocation.lat);
     params.set("lon", userLocation.lon);
     params.set("max_distance", "10000");
-
     params.set("type", activeTab);
 
     navigate(`/search?${params.toString()}`);
@@ -162,25 +191,32 @@ export default function LandingPage() {
     executeSearch(catId);
   };
 
-  // --- SUGGESTION LOGIC ---
+  // --- 4. UPDATED SUGGESTION LOGIC (MERGING DB + API) ---
   useEffect(() => {
     if (searchQuery.length > 0 && !isEmergency) {
       const lowerQuery = searchQuery.toLowerCase();
-      const matches = SEARCH_DATABASE.filter((item) => {
+
+      // Combine static data (Doctors/Labs) with fetched API data (Hospitals)
+      const combinedDatabase = [...SEARCH_DATABASE, ...apiHospitals];
+
+      const matches = combinedDatabase.filter((item) => {
         const textMatch = item.name.toLowerCase().includes(lowerQuery);
+
         if (activeTab === "doctors") return textMatch && item.kind === "doctor";
         if (activeTab === "hospitals")
           return textMatch && item.kind === "hospital";
         if (activeTab === "labs")
           return textMatch && (item.kind === "lab" || item.kind === "test");
+
         return false;
       });
+
       setSuggestions(matches);
       setShowSuggestions(true);
     } else {
       setShowSuggestions(false);
     }
-  }, [searchQuery, isEmergency, activeTab]);
+  }, [searchQuery, isEmergency, activeTab, apiHospitals]);
 
   const handleSuggestionClick = (item) => {
     if (!userLocation) {
@@ -205,7 +241,6 @@ export default function LandingPage() {
     forumRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // --- UPDATED CATEGORIES CONFIGURATION ---
   const CATEGORIES = {
     doctors: [
       { icon: Stethoscope, label: "General", id: "GENERAL_PHYSICIAN" },
@@ -233,7 +268,7 @@ export default function LandingPage() {
     ],
   };
 
-  const currentCategories = CATEGORIES[activeTab] || CATEGORIES.doctors;
+  const currentCategories = CATEGORIES[activeTab] || CATEGORIES.hospitals; // Fallback to hospitals
 
   return (
     <div
@@ -339,7 +374,6 @@ export default function LandingPage() {
                       ref={locationInputRef}
                       type="text"
                       readOnly
-                      // Value comes from Context now
                       value={locationQuery}
                       placeholder="Select Location"
                       className={`w-full pl-10 pr-10 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border rounded-xl focus:bg-white outline-none transition-all ${
@@ -348,7 +382,6 @@ export default function LandingPage() {
                           : "border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                       }`}
                     />
-                    {/* GPS BUTTON INSIDE INPUT */}
                     <button
                       onClick={getUserLocation}
                       disabled={isLocating}
