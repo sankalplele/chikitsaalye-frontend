@@ -17,6 +17,7 @@ import LabProfile from "./pages/LabProfile.jsx";
 import HospitalProfile from "./pages/HospitalProfile.jsx";
 import DoctorProfile from "./pages/DoctorProfile.jsx";
 import NotFound from "./components/NotFound.jsx";
+import RequireAuth from "./components/RequireAuth.jsx";
 
 const AppContent = () => {
   // Removed location check logic since you want transparency everywhere
@@ -29,7 +30,9 @@ const AppContent = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/lab/:id" element={<LabProfile />} />
           <Route path="/hospital/:id" element={<HospitalProfile />} />

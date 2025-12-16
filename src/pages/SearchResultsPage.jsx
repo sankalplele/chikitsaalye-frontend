@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -10,286 +10,131 @@ import {
   ChevronRight,
   Star,
   Search,
+  Loader2, // Added for loading state
+  Phone, // Added for call action
 } from "lucide-react";
-
-// --- MOCK DATA ---
-const LABS_DATA = [
-  {
-    id: "l1",
-    name: "Dr. Lal PathLabs",
-    location: "Civil Lines, Kanpur",
-    distance: "1.2 km",
-    rating: 4.5,
-    homeCollection: true,
-    tests: [
-      { name: "CBC", price: 299 },
-      { name: "Complete Blood Count", price: 299 },
-      { name: "Thyroid Profile", price: 550 },
-      { name: "Lipid Profile", price: 600 },
-      { name: "HbA1c", price: 450 },
-      { name: "Sugar Test", price: 450 },
-      { name: "MRI Scan", price: 6500 },
-    ],
-  },
-  {
-    id: "l2",
-    name: "Pathkind Diagnostics",
-    location: "Swaroop Nagar",
-    distance: "0.8 km",
-    rating: 4.2,
-    homeCollection: false,
-    tests: [
-      { name: "CBC", price: 250 },
-      { name: "Thyroid Profile", price: 500 },
-      { name: "Lipid Profile", price: 650 },
-      { name: "HbA1c", price: 400 },
-    ],
-  },
-  {
-    id: "l3",
-    name: "City X-Ray & Scan",
-    location: "Kakadeo",
-    distance: "3.5 km",
-    rating: 4.0,
-    homeCollection: true,
-    tests: [
-      { name: "CBC", price: 350 },
-      { name: "MRI Scan", price: 4500 },
-      { name: "CT Scan", price: 2200 },
-    ],
-  },
-];
-
-const HOSPITAL_DATA = [
-  {
-    id: "kgmu",
-    name: "King George's Medical University (KGMU)",
-    type: "govt",
-    specialties: ["General", "Ortho", "ENT", "Cardio", "Pediatrics", "Gynae"],
-    location: "Chowk, Lucknow",
-    distance: "85 km",
-    rating: 4.8,
-    fees: 50,
-    queueStatus: "High",
-    nextSlot: "OPD: 9 AM - 2 PM",
-    facilities: ["Trauma Center", "Emergency", "Blood Bank", "Forensic"],
-  },
-  {
-    id: "h2",
-    name: "Regency Hospital",
-    type: "private",
-    specialties: ["Cardio", "Neuro", "Multi-Speciality"],
-    location: "Sarvodaya Nagar",
-    distance: "3.5 km",
-    rating: 4.6,
-    fees: 600,
-    queueStatus: "Low",
-    nextSlot: "24 Hours",
-    facilities: ["ICU", "MRI", "Pvt Ward", "Pharmacy"],
-  },
-  {
-    id: "h1",
-    name: "Ursula Hospital",
-    type: "govt",
-    specialties: ["General", "Eye", "Ortho"],
-    location: "Parade, Kanpur",
-    distance: "2.1 km",
-    rating: 4.0,
-    fees: 5,
-    queueStatus: "High",
-    nextSlot: "OPD: 8 AM - 2 PM",
-    facilities: ["X-Ray", "Emergency"],
-  },
-  {
-    id: "h4",
-    name: "Cardiology Institute (LPS)",
-    type: "govt",
-    specialties: ["Cardio", "Heart Surgery", "CTVS"],
-    location: "Swaroop Nagar",
-    distance: "3.0 km",
-    rating: 4.5,
-    fees: 0,
-    queueStatus: "Moderate",
-    nextSlot: "OPD: 9 AM - 1 PM",
-    facilities: ["Cath Lab", "ICU", "ECG"],
-  },
-];
-
-const DOCTOR_DATA = [
-  {
-    id: 1,
-    name: "Dr. Rajesh Gupta",
-    type: "private",
-    category: "General Physician",
-    location: "Civil Lines",
-    distance: "1.2 km",
-    rating: 4.8,
-    fees: 500,
-    nextSlot: "Today, 4:00 PM",
-  },
-  {
-    id: 2,
-    name: "Dr. Anjali Singh",
-    type: "private",
-    category: "Gynaecologist",
-    location: "Kakadeo",
-    distance: "4.0 km",
-    rating: 4.9,
-    fees: 600,
-    nextSlot: "Today, 6:00 PM",
-  },
-  {
-    id: 3,
-    name: "Dr. V.K. Verma",
-    type: "govt",
-    category: "Orthopedics",
-    location: "District Hospital",
-    distance: "2.5 km",
-    rating: 4.2,
-    fees: 0,
-    nextSlot: "Tomorrow, 9:00 AM",
-  },
-  {
-    id: 4,
-    name: "Dr. Priyanshi",
-    type: "private",
-    category: "Pediatrician",
-    location: "Kidwai Nagar",
-    distance: "5.0 km",
-    rating: 4.8,
-    fees: 400,
-    nextSlot: "Today, 5:00 PM",
-  },
-  {
-    id: 5,
-    name: "Dr. Sharma",
-    type: "private",
-    category: "Cardiologist",
-    location: "Swaroop Nagar",
-    distance: "3.2 km",
-    rating: 4.7,
-    fees: 800,
-    nextSlot: "Tomorrow, 11:00 AM",
-  },
-  {
-    id: 6,
-    name: "Dr. Amit Kumar",
-    type: "govt",
-    category: "Dentist",
-    location: "LLR Hospital",
-    distance: "3.0 km",
-    rating: 4.0,
-    fees: 0,
-    nextSlot: "Tomorrow, 10:00 AM",
-  },
-  {
-    id: 7,
-    name: "Dr. Sunita Mehta",
-    type: "private",
-    category: "Eye Specialist",
-    location: "Gumti No. 5",
-    distance: "2.8 km",
-    rating: 4.6,
-    fees: 300,
-    nextSlot: "Today, 7:00 PM",
-  },
-];
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [filterType, setFilterType] = useState("all");
+
+  // --- URL PARAMS ---
+  // These are the params your landing page sends
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
+  const service = searchParams.get("service"); // This acts as the search query/category
+  const maxDistance = searchParams.get("max_distance") || "10000"; // Default 10km
+  const typeParam = searchParams.get("type") || "hospitals"; // fallback type for UI styling
+
+  // --- STATE ---
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // --- LOCAL UI FILTERS ---
+  const [filterType, setFilterType] = useState("all"); // 'all', 'govt', 'private'
   const [sortBy, setSortBy] = useState("distance");
   const [showHomeCollectionOnly, setShowHomeCollectionOnly] = useState(false);
 
-  const query = searchParams.get("q") || "";
-  const type = searchParams.get("type") || "doctors";
-  const categoryParam = searchParams.get("category");
+  // --- FETCH DATA FROM BACKEND ---
+  useEffect(() => {
+    const fetchClinics = async () => {
+      // 1. Validation: Ensure we have location data
+      if (!lat || !lon) {
+        setLoading(false);
+        // Optional: Set an error or redirect if location is missing
+        return;
+      }
 
-  let activeData =
-    type === "hospitals"
-      ? HOSPITAL_DATA
-      : type === "labs"
-      ? LABS_DATA
-      : DOCTOR_DATA;
+      setLoading(true);
+      setError(null);
 
-  // --- FILTERING LOGIC ---
-  const getTestPrice = (lab) => {
-    if (!query) return 0;
-    const searchStr = query.toLowerCase();
-    const test = lab.tests?.find((t) => {
+      try {
+        // 2. Construct API URL
+        // Endpoint: https://backend-7-dzo3.onrender.com/clinics/search/
+        const apiUrl = `/api/clinics/search/?service=${encodeURIComponent(
+          service || ""
+        )}&lat=${lat}&lon=${lon}&max_distance=${maxDistance}`;
+
+        console.log("Fetching:", apiUrl);
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch services");
+        }
+
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        console.error("API Error:", err);
+        setError("Unable to find services. Please check your connection.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClinics();
+  }, [lat, lon, service, maxDistance]);
+
+  // --- FILTERING & SORTING LOGIC ---
+
+  // Helper to safely get price (Backend might not return individual test prices yet)
+  const getTestPrice = (item) => {
+    // If backend doesn't provide 'tests' array yet, return 0
+    if (!item.tests || !service) return 0;
+
+    const searchStr = service.toLowerCase();
+    const test = item.tests.find((t) => {
       const testName = t.name.toLowerCase();
       return testName.includes(searchStr) || searchStr.includes(testName);
     });
     return test ? test.price : 0;
   };
 
-  const filteredResults = activeData
+  const filteredResults = results
     .filter((item) => {
-      // 1. Tag/Category Filter (Safeguarded for Labs)
-      if (categoryParam) {
-        const cat = categoryParam.toLowerCase();
-        // SAFEGUARD: Default to empty array if properties don't exist
-        const keywords =
-          item.specialties || (item.category ? [item.category] : []);
-        const normalizedKeywords = keywords
-          .map((k) => k.toLowerCase())
-          .join(" ");
-
-        const tagMap = {
-          cardio: "cardio",
-          heart: "cardio",
-          baby: "pediatric",
-          gynae: "gynaecologist",
-          ortho: "orthopedics",
-          eye: "eye",
-          dental: "dentist",
-          general: "general",
-        };
-
-        const targetKeyword = tagMap[cat] || cat;
-        // If keywords string is empty, it won't match, which is correct for Labs in Doctor categories
-        if (!normalizedKeywords.includes(targetKeyword)) return false;
-      }
-
-      // 2. Text Search
-      if (query) {
-        const lowerQ = query.toLowerCase();
-        const nameMatch = item.name.toLowerCase().includes(lowerQ);
-        const testMatch =
-          type === "labs" &&
-          item.tests?.some((t) => {
-            const testName = t.name.toLowerCase();
-            return testName.includes(lowerQ) || lowerQ.includes(testName);
-          });
-
-        if (!nameMatch && !testMatch) return false;
-      }
-
-      // 3. Type Filter
-      if (type !== "labs" && filterType !== "all" && item.type !== filterType)
+      // 1. Type Filter (Govt vs Private)
+      // Assuming backend returns 'type' field. If not, this filter is skipped.
+      if (
+        filterType !== "all" &&
+        item.type &&
+        item.type.toLowerCase() !== filterType
+      )
         return false;
 
-      // 4. Lab Filters
-      if (type === "labs") {
+      // 2. Lab Specific Filters
+      if (typeParam === "labs") {
         if (showHomeCollectionOnly && !item.homeCollection) return false;
-        const isLabNameSearch = item.name
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        if (!isLabNameSearch && query && getTestPrice(item) === 0) return false;
       }
 
       return true;
     })
     .sort((a, b) => {
-      if (type === "labs" && sortBy === "priceLow") {
+      // 1. Sort by Price
+      if (typeParam === "labs" && sortBy === "priceLow") {
         return getTestPrice(a) - getTestPrice(b);
       }
+      // 2. Sort by Distance (Default) - Assuming backend might not sort perfectly
+      // (This assumes the API returns a 'distance' field, if not, we skip sort)
+      // Note: Usually geo-queries return data sorted by distance automatically.
       return 0;
     });
 
+  // --- RENDER LOADING STATE ---
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-blue-900 flex flex-col items-center justify-center pt-20">
+        <Loader2 size={48} className="text-white animate-spin mb-4" />
+        <p className="text-blue-100 font-medium animate-pulse">
+          Searching for nearby {service || "services"}...
+        </p>
+      </div>
+    );
+  }
+
+  // --- MAIN RENDER ---
   return (
-    // PT-24 to push content below Navbar
     <div className="min-h-screen bg-blue-900 relative font-sans pt-24 pb-20">
       {/* Background Pattern */}
       <div
@@ -314,16 +159,14 @@ export default function SearchResultsPage() {
               Search Results
             </p>
             <h1 className="text-2xl font-bold text-white capitalize truncate">
-              {categoryParam
-                ? `${categoryParam} Specialists`
-                : query || `All ${type}`}
+              {service ? `${service} nearby` : `All ${typeParam}`}
             </h1>
           </div>
         </div>
 
         {/* Filters Row */}
         <div className="flex items-center space-x-3 overflow-x-auto pb-2 hide-scrollbar">
-          {type === "labs" ? (
+          {typeParam === "labs" ? (
             <>
               <div className="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 border border-white/10">
                 <ArrowUpDown size={14} className="text-blue-200" />
@@ -391,122 +234,141 @@ export default function SearchResultsPage() {
 
       {/* --- RESULTS LIST --- */}
       <div className="max-w-3xl mx-auto px-4 space-y-4 relative z-10">
-        {filteredResults.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => {
-              if (type === "hospitals") navigate(`/hospital/${item.id}`);
-              else if (type === "labs") navigate(`/lab/${item.id}`);
-              else navigate(`/doctor/${item.id}`);
-            }}
-            className="bg-white rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5"
-          >
-            <div className="flex">
-              {/* Color Stripe - ADDED ORANGE STRIPE FOR LABS */}
-              <div
-                className={`w-1.5 ${
-                  type === "labs"
-                    ? "bg-orange-500"
-                    : item.type === "govt"
-                    ? "bg-green-500"
-                    : "bg-purple-500"
-                }`}
-              ></div>
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+            <p className="text-red-600 font-medium">{error}</p>
+          </div>
+        )}
 
-              <div className="p-4 flex-1 flex">
-                {/* Icon Box */}
+        {/* Results Map */}
+        {!error &&
+          filteredResults.map((item, index) => (
+            <div
+              // Use _id from backend or index as fallback
+              key={item._id || index}
+              onClick={() => {
+                // Navigating to detail page (ensure these routes exist or handle accordingly)
+                navigate(`/${typeParam.slice(0, -1)}/${item._id}`);
+              }}
+              className="bg-white rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5"
+            >
+              <div className="flex">
+                {/* Color Stripe based on Type */}
                 <div
-                  className={`w-16 h-16 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 ${
-                    type === "govt" ? "bg-green-50" : "bg-blue-50"
+                  className={`w-1.5 ${
+                    typeParam === "labs"
+                      ? "bg-orange-500"
+                      : item.type === "govt"
+                      ? "bg-green-500"
+                      : "bg-purple-500"
                   }`}
-                >
-                  {type === "labs" ? (
-                    <Microscope className="text-blue-600" />
-                  ) : (
-                    <Building className="text-blue-600" />
-                  )}
-                </div>
+                ></div>
 
-                <div className="flex-1 min-w-0">
-                  {/* Badge - ADDED BADGE FOR LABS */}
-                  <span
-                    className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                      type === "labs"
-                        ? "bg-orange-100 text-orange-700"
-                        : item.type === "govt"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-purple-100 text-purple-700"
+                <div className="p-4 flex-1 flex">
+                  {/* Icon Box */}
+                  <div
+                    className={`w-16 h-16 rounded-lg flex items-center justify-center mr-4 flex-shrink-0 ${
+                      item.type === "govt" ? "bg-green-50" : "bg-blue-50"
                     }`}
                   >
-                    {type === "labs"
-                      ? "Diagnostics • Verified"
-                      : item.type === "govt"
-                      ? "Govt • Low Cost"
-                      : "Private • Verified"}
-                  </span>
+                    {typeParam === "labs" ? (
+                      <Microscope className="text-blue-600" />
+                    ) : (
+                      <Building className="text-blue-600" />
+                    )}
+                  </div>
 
-                  <h2 className="font-bold text-gray-900 truncate text-lg">
-                    {item.name}
-                  </h2>
-                  <p className="text-sm text-gray-600 flex items-center mt-0.5">
-                    <MapPin size={12} className="mr-1" /> {item.location}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    {/* Badge */}
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                        typeParam === "labs"
+                          ? "bg-orange-100 text-orange-700"
+                          : item.type === "govt"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {typeParam === "labs"
+                        ? "Diagnostics"
+                        : item.type === "govt"
+                        ? "Govt • Low Cost"
+                        : "Private • Verified"}
+                    </span>
 
-                  {/* Lab Specific Logic */}
-                  {type === "labs" ? (
-                    <div className="mt-2">
-                      {query && getTestPrice(item) > 0 ? (
-                        <div className="bg-green-50 inline-block px-3 py-1 rounded-lg border border-green-100">
-                          <p className="text-[10px] text-green-700 uppercase font-bold">
-                            Best Price For {query}
-                          </p>
-                          <span className="text-green-800 font-bold text-lg leading-tight">
-                            ₹{getTestPrice(item)}
+                    <h2 className="font-bold text-gray-900 truncate text-lg">
+                      {item.name || "Unknown Clinic"}
+                    </h2>
+                    <p className="text-sm text-gray-600 flex items-center mt-0.5 truncate">
+                      <MapPin size={12} className="mr-1 flex-shrink-0" />
+                      {item.address || item.location || "Address not provided"}
+                    </p>
+
+                    {/* Lab Specific Logic (Price Display) */}
+                    {typeParam === "labs" ? (
+                      <div className="mt-2">
+                        {service && getTestPrice(item) > 0 ? (
+                          <div className="bg-green-50 inline-block px-3 py-1 rounded-lg border border-green-100">
+                            <p className="text-[10px] text-green-700 uppercase font-bold">
+                              Estimated Price
+                            </p>
+                            <span className="text-green-800 font-bold text-lg leading-tight">
+                              ₹{getTestPrice(item)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-orange-600 text-xs font-bold flex items-center mt-2 group">
+                            View Test List{" "}
+                            <ChevronRight
+                              size={14}
+                              className="group-hover:translate-x-1 transition-transform"
+                            />
                           </span>
-                        </div>
-                      ) : (
-                        <span className="text-orange-600 text-xs font-bold flex items-center mt-2 group">
-                          View Test List{" "}
-                          <ChevronRight
-                            size={14}
-                            className="group-hover:translate-x-1 transition-transform"
-                          />
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex gap-2 overflow-hidden">
-                      {item.specialties ? (
-                        item.specialties.slice(0, 3).map((s) => (
-                          <span
-                            key={s}
-                            className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 whitespace-nowrap"
-                          >
-                            {s}
+                        )}
+                      </div>
+                    ) : (
+                      // Hospital/Doctor Tags
+                      <div className="mt-2 flex gap-2 overflow-hidden flex-wrap">
+                        {item.specialties && item.specialties.length > 0 ? (
+                          item.specialties.slice(0, 3).map((s, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 whitespace-nowrap"
+                            >
+                              {s}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600">
+                            {item.category || service || "General"}
                           </span>
-                        ))
-                      ) : (
-                        <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600">
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {filteredResults.length === 0 && (
+        {/* No Results Found State */}
+        {!loading && !error && filteredResults.length === 0 && (
           <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
             <div className="bg-white/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
               <Search size={32} className="text-blue-200" />
             </div>
             <h3 className="text-white text-xl font-bold">No results found</h3>
-            <p className="text-blue-200 mt-2">
-              Try adjusting your filters or search query.
+            <p className="text-blue-200 mt-2 px-6">
+              We couldn't find any {service} services within{" "}
+              {parseInt(maxDistance) / 1000}km.
             </p>
+            <button
+              onClick={() => navigate("/")}
+              className="mt-6 bg-white text-blue-900 px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition"
+            >
+              Try Different Location
+            </button>
           </div>
         )}
       </div>

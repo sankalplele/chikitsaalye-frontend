@@ -13,18 +13,16 @@ function Dashboard() {
   const [token, setToken] = useState("XD");
   const navigate = useNavigate();
   {
-    /*
-  useEffect(() => {
-    // Check if user is logged in
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) {
-      // Redirect to login if no token
-      navigate("/login");
-    } else {
-      setToken(authToken);
-    }
-  }, [navigate]);
-  */
+    useEffect(() => {
+      // Check if user is logged in
+      const authToken = localStorage.getItem("authToken");
+      if (!authToken) {
+        // Redirect to login if no token
+        navigate("/login");
+      } else {
+        setToken(authToken);
+      }
+    }, [navigate]);
   }
 
   const handleLogout = () => {

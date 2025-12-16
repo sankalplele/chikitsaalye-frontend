@@ -1,31 +1,49 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
   Home,
   LogIn,
+  LogOut, // Added LogOut icon
   UserPlus,
   LayoutDashboard,
   CircleQuestionMark,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext"; // Import Auth Context
 
 function Navbar({ transparent }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth(); // Get auth state
 
   const isActive = (path) => location.pathname === path;
 
+  // 1. Defined Content Links (Removed Login/Register from here)
   const navLinks = [
     { path: "/", label: "Home", icon: Home },
-    { path: "/login", label: "Login", icon: LogIn },
-    { path: "/register", label: "Register", icon: UserPlus },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/forum", label: "Forum", icon: CircleQuestionMark },
   ];
 
-  // Simplified Styles for Global Transparency
+  // 2. Handle Login Click (The Magic Part)
+  const handleLoginClick = () => {
+    setMobileMenuOpen(false);
+    // Navigate to login, but pass the current location so we can come back
+    navigate("/login", { state: { from: location } });
+  };
+
+  const handleLogoutClick = () => {
+    setMobileMenuOpen(false);
+    logout();
+    navigate("/"); // Optional: Redirect to home after logout
+  };
+
   const navContainerClass = "absolute top-0 w-full z-50";
+  const linkBaseClass =
+    "flex items-center space-x-2 px-4 py-2 rounded-full text-sm transition-all duration-200 text-white/90 hover:text-white hover:bg-white/10";
+  const activeLinkClass = "bg-white/20 font-semibold shadow-inner";
 
   return (
     <nav className={navContainerClass}>
@@ -46,16 +64,15 @@ function Navbar({ transparent }) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
+            {/* Standard Links */}
             {navLinks.map((link) => {
               const Icon = link.icon;
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm transition-all duration-200 text-white/90 hover:text-white hover:bg-white/10 ${
-                    isActive(link.path)
-                      ? "bg-white/20 font-semibold shadow-inner"
-                      : ""
+                  className={`${linkBaseClass} ${
+                    isActive(link.path) ? activeLinkClass : ""
                   }`}
                 >
                   <Icon size={16} />
@@ -63,6 +80,41 @@ function Navbar({ transparent }) {
                 </Link>
               );
             })}
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-white/20 mx-2" />
+
+            {/* Auth Buttons Logic */}
+            {isAuthenticated ? (
+              // 3. LOGGED IN STATE
+              <button onClick={handleLogoutClick} className={linkBaseClass}>
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            ) : (
+              // 4. LOGGED OUT STATE
+              <>
+                <button
+                  onClick={handleLoginClick}
+                  className={`${linkBaseClass} ${
+                    isActive("/login") ? activeLinkClass : ""
+                  }`}
+                >
+                  <LogIn size={16} />
+                  <span>Login</span>
+                </button>
+
+                <Link
+                  to="/register"
+                  className={`${linkBaseClass} ${
+                    isActive("/register") ? activeLinkClass : ""
+                  }`}
+                >
+                  <UserPlus size={16} />
+                  <span>Register</span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -95,6 +147,37 @@ function Navbar({ transparent }) {
                 </Link>
               );
             })}
+
+            <div className="h-px w-full bg-white/10 my-2" />
+
+            {/* Mobile Auth Logic */}
+            {isAuthenticated ? (
+              <button
+                onClick={handleLogoutClick}
+                className="flex w-full items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white text-left"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleLoginClick}
+                  className="flex w-full items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white text-left"
+                >
+                  <LogIn size={18} />
+                  <span>Login</span>
+                </button>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  <UserPlus size={18} />
+                  <span>Register</span>
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>
