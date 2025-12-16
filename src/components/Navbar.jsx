@@ -72,7 +72,7 @@ function Navbar() {
             <img
               src={logo}
               alt="Chikitsaalye Logo"
-              className="h-16 w-16 object-contain bg-cover"
+              className="h-14 w-14 rounded-xl shadow-lg"
             />
             {/* Fallback Logo Icon: Orange Gradient */}
             <div className="w-9 h-9 rounded-xl hidden items-center justify-center shadow-lg bg-gradient-to-br from-orange-500 to-red-500 text-white">
