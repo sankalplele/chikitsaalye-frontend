@@ -20,11 +20,12 @@ import NotFound from "./components/NotFound.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 
 const AppContent = () => {
-  // Removed location check logic since you want transparency everywhere
+  const location = useLocation();
+  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar is always transparent now */}
-      <Navbar transparent={true} />
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
+      {!hideNavbar && <Navbar />}
       <div className="flex-grow">
         <Routes>
           <Route path="/" element={<LandingPage />} />

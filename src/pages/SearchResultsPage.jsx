@@ -134,9 +134,10 @@ export default function SearchResultsPage() {
   // --- RENDER LOADING STATE ---
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-900 flex flex-col items-center justify-center pt-20">
-        <Loader2 size={48} className="text-white animate-spin mb-4" />
-        <p className="text-blue-100 font-medium animate-pulse">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex flex-col items-center justify-center pt-20 transition-colors duration-300">
+        <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
+        <Loader2 size={48} className="text-white dark:text-white animate-spin mb-4" />
+        <p className="text-blue-700 dark:text-slate-300 font-medium animate-pulse">
           Searching for nearby {service || "services"}...
         </p>
       </div>
@@ -145,10 +146,13 @@ export default function SearchResultsPage() {
 
   // --- MAIN RENDER ---
   return (
-    <div className="min-h-screen bg-blue-900 relative font-sans pt-24 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 relative font-sans pt-24 pb-20 transition-colors duration-300">
+      {/* Dark mode background overlay */}
+      <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
+      
       {/* Background Pattern */}
       <div
-        className="absolute inset-0 opacity-10 pointer-events-none fixed"
+        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none fixed z-0"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}
@@ -159,15 +163,15 @@ export default function SearchResultsPage() {
         <div className="flex items-center space-x-3 mb-4">
           <button
             onClick={() => navigate("/")}
-            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="p-2 rounded-full bg-blue-100 dark:bg-slate-800/50 text-blue-700 dark:text-white hover:bg-blue-200 dark:hover:bg-slate-700 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex-1">
-            <p className="text-xs text-blue-200 font-bold uppercase tracking-wide">
+            <p className="text-xs text-blue-700 dark:text-slate-400 font-bold uppercase tracking-wide">
               Search Results
             </p>
-            <h1 className="text-2xl font-bold text-white capitalize truncate">
+            <h1 className="text-2xl font-bold text-blue-900 dark:text-white capitalize truncate">
               {service ? `${service} nearby` : `All ${typeParam}`}
             </h1>
           </div>
@@ -177,12 +181,12 @@ export default function SearchResultsPage() {
         <div className="flex items-center space-x-3 overflow-x-auto pb-2 hide-scrollbar">
           {typeParam === "labs" ? (
             <>
-              <div className="flex items-center space-x-2 bg-white/10 rounded-full px-3 py-1.5 border border-white/10">
-                <ArrowUpDown size={14} className="text-blue-200" />
+              <div className="flex items-center space-x-2 bg-blue-50 dark:bg-slate-800/50 rounded-full px-3 py-1.5 border border-blue-200 dark:border-slate-700">
+                <ArrowUpDown size={14} className="text-blue-600 dark:text-slate-300" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent text-sm font-medium text-white focus:outline-none cursor-pointer [&>option]:text-gray-900"
+                  className="bg-transparent text-sm font-medium text-blue-700 dark:text-white focus:outline-none cursor-pointer [&>option]:text-gray-900 dark:[&>option]:text-slate-900"
                 >
                   <option value="distance">Nearest First</option>
                   <option value="priceLow">Price: Low to High</option>
@@ -195,7 +199,7 @@ export default function SearchResultsPage() {
                 className={`px-4 py-1.5 rounded-full text-sm font-medium flex items-center space-x-2 transition-colors border ${
                   showHomeCollectionOnly
                     ? "bg-orange-500 border-orange-500 text-white shadow-lg"
-                    : "bg-white/5 border-white/20 text-blue-100 hover:bg-white/10"
+                    : "bg-blue-50 dark:bg-slate-800/50 border-blue-200 dark:border-slate-700 text-blue-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-slate-700"
                 }`}
               >
                 <Home size={14} />
@@ -208,8 +212,8 @@ export default function SearchResultsPage() {
                 onClick={() => setFilterType("all")}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
                   filterType === "all"
-                    ? "bg-white text-blue-900 border-white shadow-lg"
-                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
+                    ? "bg-white dark:bg-slate-700 text-blue-900 dark:text-white border-blue-300 dark:border-slate-600 shadow-lg"
+                    : "bg-blue-50 dark:bg-slate-800/50 text-blue-700 dark:text-slate-300 border-blue-200 dark:border-slate-700 hover:bg-blue-100 dark:hover:bg-slate-700"
                 }`}
               >
                 All
@@ -219,7 +223,7 @@ export default function SearchResultsPage() {
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors border ${
                   filterType === "govt"
                     ? "bg-green-500 text-white border-green-500 shadow-lg"
-                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
+                    : "bg-blue-50 dark:bg-slate-800/50 text-blue-700 dark:text-slate-300 border-blue-200 dark:border-slate-700 hover:bg-blue-100 dark:hover:bg-slate-700"
                 }`}
               >
                 <Building size={14} />
@@ -230,7 +234,7 @@ export default function SearchResultsPage() {
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center space-x-2 transition-colors border ${
                   filterType === "private"
                     ? "bg-purple-500 text-white border-purple-500 shadow-lg"
-                    : "bg-white/5 text-blue-100 border-white/10 hover:bg-white/10"
+                    : "bg-blue-50 dark:bg-slate-800/50 text-blue-700 dark:text-slate-300 border-blue-200 dark:border-slate-700 hover:bg-blue-100 dark:hover:bg-slate-700"
                 }`}
               >
                 <Star size={14} />
@@ -257,7 +261,7 @@ export default function SearchResultsPage() {
               onClick={() => {
                 navigate(`/${typeParam.slice(0, -1)}/${item.id}`);
               }}
-              className="bg-white rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5"
+              className="bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden hover:scale-[1.01] transition-all duration-200 cursor-pointer border-r-4 border-b-4 border-black/5 dark:border-slate-700/50"
             >
               <div className="flex">
                 {/* Color Stripe */}
@@ -304,12 +308,12 @@ export default function SearchResultsPage() {
                     </span>
 
                     {/* --- FIX 4: Mapped correct API fields (hospital_name) --- */}
-                    <h2 className="font-bold text-gray-900 truncate text-lg">
+                    <h2 className="font-bold text-gray-900 dark:text-white truncate text-lg">
                       {item.hospital_name || item.name || "Unknown Clinic"}
                     </h2>
 
                     {/* --- FIX 5: Mapped correct API fields (hospital_address) --- */}
-                    <p className="text-sm text-gray-600 flex items-center mt-0.5 truncate">
+                    <p className="text-sm text-gray-600 dark:text-slate-300 flex items-center mt-0.5 truncate">
                       <MapPin size={12} className="mr-1 flex-shrink-0" />
                       {item.hospital_address ||
                         item.address ||
@@ -381,18 +385,18 @@ export default function SearchResultsPage() {
 
         {/* No Results Found State */}
         {!loading && !error && filteredResults.length === 0 && (
-          <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
-            <div className="bg-white/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-              <Search size={32} className="text-blue-200" />
+          <div className="text-center py-20 bg-white/5 dark:bg-slate-800/50 rounded-2xl border border-white/10 dark:border-slate-700">
+            <div className="bg-blue-100 dark:bg-slate-700/50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <Search size={32} className="text-blue-600 dark:text-slate-400" />
             </div>
-            <h3 className="text-white text-xl font-bold">No results found</h3>
-            <p className="text-blue-200 mt-2 px-6">
+            <h3 className="text-blue-900 dark:text-white text-xl font-bold">No results found</h3>
+            <p className="text-blue-700 dark:text-slate-300 mt-2 px-6">
               We couldn't find any {service} services within{" "}
               {parseInt(maxDistance) / 1000}km.
             </p>
             <button
               onClick={() => navigate("/")}
-              className="mt-6 bg-white text-blue-900 px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition"
+              className="mt-6 bg-blue-600 dark:bg-slate-700 text-white dark:text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 dark:hover:bg-slate-600 transition"
             >
               Try Different Location
             </button>

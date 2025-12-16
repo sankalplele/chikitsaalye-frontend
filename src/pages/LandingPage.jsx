@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocationContext } from "../context/LocationContext";
+import Fuse from "fuse.js";
 import {
   Search,
   Clock,
@@ -9,7 +10,6 @@ import {
   Building,
   User,
   Microscope,
-  TestTube,
   Shield,
   Stethoscope,
   Heart,
@@ -24,142 +24,236 @@ import {
   Droplet,
   Thermometer,
   Bone,
-  ArrowDown,
   MapPin,
   Loader2,
   Navigation,
+  Layers,
+  FlaskConical,
+  Syringe,
+  Dna,
+  Brain,
 } from "lucide-react";
 
-// Keep Doctors and Labs here, but we will fetch Hospitals from API
+// --- STATIC DATABASE (Doctors, Labs, AND Specific Tests) ---
 const SEARCH_DATABASE = [
+  // DOCTORS
   {
     id: "d1",
     name: "Dr. Rajesh Gupta",
-    type: "private",
     category: "General Physician",
-    rating: 4.8,
     kind: "doctor",
+    tabs: ["doctors"],
   },
   {
     id: "d2",
     name: "Dr. Anjali Singh",
-    type: "private",
     category: "Gynaecologist",
-    rating: 4.9,
     kind: "doctor",
+    tabs: ["doctors"],
   },
   {
     id: "d3",
     name: "Dr. V.K. Verma",
-    type: "govt",
     category: "Orthopedics",
-    rating: 4.2,
     kind: "doctor",
+    tabs: ["doctors"],
   },
+
+  // LABS
   {
     id: "l1",
     name: "Dr. Lal PathLabs",
-    type: "private",
-    category: "Lab",
-    rating: 4.5,
+    category: "Pathology",
     kind: "lab",
+    tabs: ["labs"],
+  },
+  {
+    id: "l2",
+    name: "City X-Ray & Scan",
+    category: "Radiology",
+    kind: "lab",
+    tabs: ["labs"],
+  },
+
+  // LAB TESTS
+  {
+    id: "t1",
+    name: "CBC (Complete Blood Count)",
+    category: "Hematology",
+    kind: "test",
+    tabs: ["labs"],
+  },
+  {
+    id: "t2",
+    name: "Thyroid Profile (T3, T4, TSH)",
+    category: "Hormones",
+    kind: "test",
+    tabs: ["labs"],
+  },
+  {
+    id: "t3",
+    name: "MRI Brain",
+    category: "Radiology",
+    kind: "test",
+    tabs: ["labs"],
+  },
+  {
+    id: "t4",
+    name: "Fasting Blood Sugar",
+    category: "Diabetes",
+    kind: "test",
+    tabs: ["labs"],
+  },
+  {
+    id: "t5",
+    name: "RT-PCR",
+    category: "Covid-19",
+    kind: "test",
+    tabs: ["labs"],
   },
 ];
 
+// --- CATEGORY DEFINITIONS ---
+const CATEGORIES = {
+  doctors: [
+    { icon: Stethoscope, label: "General Physician", id: "GENERAL_PHYSICIAN" },
+    { icon: Baby, label: "Gynaecologist", id: "GYNAECOLOGY" },
+    { icon: Heart, label: "Cardiologist", id: "CARDIOLOGY" },
+    { icon: Bone, label: "Orthopedist", id: "ORTHOPEDICS" },
+    { icon: Smile, label: "Dentist", id: "DENTISTRY" },
+    { icon: Eye, label: "Ophthalmologist", id: "OPHTHALMOLOGY" },
+  ],
+  hospitals: [
+    { icon: Building, label: "Multispeciality", id: "MULTISPECIALITY" },
+    { icon: Activity, label: "Trauma Center", id: "TRAUMA" },
+    { icon: Heart, label: "Heart Institute", id: "CARDIOLOGY_CENTER" },
+    { icon: Baby, label: "Maternity Home", id: "MATERNITY_HOME" },
+    { icon: Eye, label: "Eye Center", id: "EYE_HOSPITAL" },
+  ],
+  labs: [
+    { icon: Droplet, label: "CBC Test", id: "CBC" },
+    { icon: Brain, label: "MRI Scan", id: "MRI" },
+    { icon: Activity, label: "Diabetes/Sugar", id: "SUGAR" },
+    { icon: Dna, label: "Thyroid", id: "THYROID" },
+    { icon: Scan, label: "X-Ray", id: "XRAY" },
+    { icon: Thermometer, label: "Fever Panel", id: "FEVER" },
+  ],
+};
+
 export default function LandingPage() {
-  // --- MODIFICATION START: Initialize state from Session Storage or Default to 'hospitals' ---
+  // --- STATE MANAGEMENT ---
   const [activeTab, setActiveTab] = useState(() => {
-    // Check if a tab was previously selected in this session
-    const savedTab = sessionStorage.getItem("selectedSearchTab");
-    // Return saved tab, OR default to "hospitals" if null
-    return savedTab || "hospitals";
+    return sessionStorage.getItem("selectedSearchTab") || "hospitals";
   });
-  // --- MODIFICATION END ---
 
   const [searchQuery, setSearchQuery] = useState("");
-
   const { userLocation, setUserLocation, locationQuery, setLocationQuery } =
     useLocationContext();
-
   const [isEmergency, setIsEmergency] = useState(false);
+
+  // Search State
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // New State for API Hospitals
   const [apiHospitals, setApiHospitals] = useState([]);
+  const [searchIndex, setSearchIndex] = useState([]);
 
+  // UI State
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState(false);
+  const [inputError, setInputError] = useState(false);
 
   const navigate = useNavigate();
-  const forumRef = useRef(null);
   const locationInputRef = useRef(null);
+  const searchInputRef = useRef(null);
 
-  // --- MODIFICATION START: Save activeTab to storage whenever it changes ---
+  // --- SAVE TAB STATE ---
   useEffect(() => {
     sessionStorage.setItem("selectedSearchTab", activeTab);
   }, [activeTab]);
-  // --- MODIFICATION END ---
 
-  // --- 1. FETCH HOSPITALS FROM API ---
+  // --- 1. FETCH HOSPITALS API ---
   useEffect(() => {
     const fetchHospitals = async () => {
       try {
         const response = await fetch("/api/clinics/get_all_clinics/");
         if (response.ok) {
           const data = await response.json();
-
-          // Map API data to the format your UI expects
           const formattedHospitals = data.map((clinic) => ({
             id: clinic.id || clinic._id,
             name: clinic.name || clinic.hospital_name,
-            type: clinic.type || "private",
             category: clinic.category || "General Hospital",
-            rating: clinic.rating || 4.0,
             kind: "hospital",
+            tabs: ["hospitals"],
           }));
-
           setApiHospitals(formattedHospitals);
-        } else {
-          console.error("Failed to fetch clinics");
         }
       } catch (error) {
         console.error("Error fetching hospitals:", error);
       }
     };
-
     fetchHospitals();
   }, []);
 
-  // --- 2. GET LOCATION FUNCTION ---
-  const getUserLocation = () => {
-    setIsLocating(true);
-    setLocationError(false);
+  // --- 2. BUILD SEARCH INDEX ---
+  useEffect(() => {
+    const categoryItems = [];
+    Object.keys(CATEGORIES).forEach((tabKey) => {
+      CATEGORIES[tabKey].forEach((cat) => {
+        categoryItems.push({
+          id: cat.id,
+          name: cat.label,
+          category: tabKey === "labs" ? "Test/Scan" : "Specialty",
+          kind: tabKey === "labs" ? "test" : "category",
+          tabs: [tabKey],
+        });
+      });
+    });
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lon: longitude });
-          setLocationQuery("Current Location (Detected)");
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          alert("Could not access location. Please enable permissions.");
-          setIsLocating(false);
-          locationInputRef.current?.focus();
-        }
-      );
-    } else {
-      alert("Geolocation is not supported by this browser.");
-      setIsLocating(false);
+    const mergedData = [...SEARCH_DATABASE, ...apiHospitals, ...categoryItems];
+    setSearchIndex(mergedData);
+  }, [apiHospitals]);
+
+  // --- 3. CONFIGURE FUSE.JS ---
+  const fuse = useMemo(() => {
+    return new Fuse(searchIndex, {
+      keys: ["name", "category"],
+      threshold: 0.3,
+      distance: 100,
+      includeScore: true,
+    });
+  }, [searchIndex]);
+
+  // --- 4. HANDLE INPUT & FUZZY SEARCH ---
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setShowSuggestions(false);
+      return;
     }
-  };
 
-  // --- 3. MAIN NAVIGATION HANDLER ---
-  const executeSearch = (overrideService = null) => {
+    if (!isEmergency) {
+      const results = fuse.search(searchQuery);
+      const filteredResults = results
+        .map((result) => result.item)
+        .filter((item) => item.tabs.includes(activeTab))
+        .slice(0, 6);
+
+      setSuggestions(filteredResults);
+      setShowSuggestions(true);
+    }
+  }, [searchQuery, activeTab, isEmergency, fuse]);
+
+  // --- 5. EXECUTE SEARCH ---
+  const executeSearch = (overrideQuery = null, overrideType = null) => {
     if (isEmergency) return alert("Connecting to 108...");
+
+    const queryToUse = overrideQuery || searchQuery;
+
+    if (!queryToUse || queryToUse.trim() === "") {
+      setInputError(true);
+      searchInputRef.current?.focus();
+      setTimeout(() => setInputError(false), 500);
+      return;
+    }
 
     if (!userLocation) {
       setLocationError(true);
@@ -168,12 +262,10 @@ export default function LandingPage() {
     }
 
     const params = new URLSearchParams();
-    const serviceValue = overrideService || searchQuery || activeTab;
-    params.set("service", serviceValue);
+    params.set("q", queryToUse);
+    params.set("type", overrideType || activeTab);
     params.set("lat", userLocation.lat);
     params.set("lon", userLocation.lon);
-    params.set("max_distance", "10000");
-    params.set("type", activeTab);
 
     navigate(`/search?${params.toString()}`);
   };
@@ -185,108 +277,99 @@ export default function LandingPage() {
     }
   };
 
-  const handleSearchBtnClick = () => executeSearch();
-
-  const handleCategoryClick = (catId) => {
-    executeSearch(catId);
-  };
-
-  // --- 4. UPDATED SUGGESTION LOGIC (MERGING DB + API) ---
-  useEffect(() => {
-    if (searchQuery.length > 0 && !isEmergency) {
-      const lowerQuery = searchQuery.toLowerCase();
-
-      // Combine static data (Doctors/Labs) with fetched API data (Hospitals)
-      const combinedDatabase = [...SEARCH_DATABASE, ...apiHospitals];
-
-      const matches = combinedDatabase.filter((item) => {
-        const textMatch = item.name.toLowerCase().includes(lowerQuery);
-
-        if (activeTab === "doctors") return textMatch && item.kind === "doctor";
-        if (activeTab === "hospitals")
-          return textMatch && item.kind === "hospital";
-        if (activeTab === "labs")
-          return textMatch && (item.kind === "lab" || item.kind === "test");
-
-        return false;
-      });
-
-      setSuggestions(matches);
-      setShowSuggestions(true);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [searchQuery, isEmergency, activeTab, apiHospitals]);
-
   const handleSuggestionClick = (item) => {
-    if (!userLocation) {
-      setLocationError(true);
-      locationInputRef.current?.focus();
-      return;
+    if (item.kind === "category") {
+      executeSearch(item.name);
+    } else if (item.kind === "doctor") {
+      navigate(`/doctor/${item.id}`);
+    } else if (item.kind === "hospital") {
+      navigate(`/hospital/${item.id}`);
+    } else if (item.kind === "lab") {
+      navigate(`/lab/${item.id}`);
+    } else if (item.kind === "test") {
+      navigate(`/search?type=labs&q=${item.name}&kind=test`);
     }
-
-    if (item.kind === "doctor") navigate(`/doctor/${item.id}`);
-    else if (item.kind === "hospital") navigate(`/hospital/${item.id}`);
-    else navigate(`/search?type=labs&q=${item.name}`);
     setShowSuggestions(false);
   };
 
+  // --- 6. LOCATION HANDLER ---
+  const getUserLocation = () => {
+    setIsLocating(true);
+    setLocationError(false);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+          setLocationQuery("Near Me");
+          setIsLocating(false);
+        },
+        () => {
+          alert("Location permission denied.");
+          setIsLocating(false);
+        }
+      );
+    } else {
+      alert("Geolocation not supported.");
+      setIsLocating(false);
+    }
+  };
+
+  // --- ICON HELPER ---
   const getIcon = (kind) => {
-    if (kind === "doctor") return <User size={18} />;
-    if (kind === "hospital") return <Building size={18} />;
-    return <Microscope size={18} />;
+    switch (kind) {
+      case "doctor":
+        return <User size={18} />;
+      case "hospital":
+        return <Building size={18} />;
+      case "lab":
+        return <Microscope size={18} />;
+      case "test":
+        return <FlaskConical size={18} />;
+      case "category":
+        return <Layers size={18} />;
+      default:
+        return <Search size={18} />;
+    }
   };
 
-  const scrollToForum = () => {
-    forumRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const CATEGORIES = {
-    doctors: [
-      { icon: Stethoscope, label: "General", id: "GENERAL_PHYSICIAN" },
-      { icon: Baby, label: "Women", id: "GYNAECOLOGY" },
-      { icon: Heart, label: "Heart", id: "CARDIOLOGY" },
-      { icon: Bone, label: "Bone", id: "ORTHOPEDICS" },
-      { icon: Smile, label: "Dental", id: "DENTISTRY" },
-      { icon: Eye, label: "Eye", id: "OPHTHALMOLOGY" },
-    ],
-    hospitals: [
-      { icon: Building, label: "Multispeciality", id: "MULTISPECIALITY" },
-      { icon: Smile, label: "Dental Clinic", id: "DENTAL_CLINIC" },
-      { icon: Activity, label: "Trauma Center", id: "TRAUMA" },
-      { icon: Heart, label: "Heart Inst", id: "CARDIOLOGY_CENTER" },
-      { icon: Baby, label: "Maternity", id: "MATERNITY_HOME" },
-      { icon: Eye, label: "Eye Center", id: "EYE_HOSPITAL" },
-    ],
-    labs: [
-      { icon: Thermometer, label: "Thyroid", id: "THYROID" },
-      { icon: TestTube, label: "CBC", id: "CBC" },
-      { icon: Scan, label: "MRI / CT", id: "MRI_CT" },
-      { icon: Bone, label: "X-Ray", id: "XRAY" },
-      { icon: Droplet, label: "Diabetes", id: "DIABETES" },
-      { icon: User, label: "Full Body", id: "FULL_BODY_CHECKUP" },
-    ],
-  };
-
-  const currentCategories = CATEGORIES[activeTab] || CATEGORIES.hospitals; // Fallback to hospitals
+  const currentCategories = CATEGORIES[activeTab] || CATEGORIES.hospitals;
 
   return (
     <div
-      className={`min-h-screen font-sans overflow-x-hidden w-full relative ${
-        isEmergency ? "bg-red-50" : "bg-gray-50"
+      className={`min-h-screen font-sans overflow-x-hidden w-full relative transition-colors duration-500 ${
+        isEmergency
+          ? "bg-red-50 dark:bg-red-900/20"
+          : "bg-gradient-to-br from-blue-50 via-white to-cyan-50" // BRIGHT BLUE GRADIENT
       }`}
       onClick={() => setShowSuggestions(false)}
     >
-      {/* 1. HERO SECTION */}
+      {/* Dark mode background overlay */}
+      {!isEmergency && (
+        <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
+      )}
+      
+      {/* HERO SECTION */}
       <section
-        className={`relative flex min-h-screen flex-col justify-center items-center px-4 py-6 overflow-visible transition-colors duration-500 ${
-          isEmergency ? "bg-red-50 pt-20" : "bg-blue-900 pt-32 pb-20"
+        className={`relative flex min-h-screen flex-col justify-center items-center px-4 py-6 ${
+          isEmergency ? "pt-20" : "pt-32 pb-20"
         }`}
       >
-        {/* Background Pattern */}
+        {/* Background Pattern (Subtle dots for light theme, plus signs for dark) */}
         {!isEmergency && (
           <div
-            className="absolute inset-0 opacity-10 pointer-events-none z-0"
+            className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        )}
+        {/* Dark mode pattern like ForumPage */}
+        {!isEmergency && (
+          <div
+            className="absolute inset-0 opacity-0 dark:opacity-[0.05] pointer-events-none z-0 hidden dark:block"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
@@ -294,13 +377,13 @@ export default function LandingPage() {
         )}
 
         {/* Emergency Toggle */}
-        <div className="fixed bottom-6 right-6 z-[60]">
+        <div className="fixed bottom-6 right-6 z-[9999]">
           <button
             onClick={() => setIsEmergency(!isEmergency)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all shadow-2xl ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-2xl transition-all ${
               isEmergency
                 ? "bg-white text-red-600 animate-pulse border-4 border-red-600"
-                : "bg-red-600/90 hover:bg-red-700 text-white backdrop-blur-sm border border-white/20 hover:scale-105"
+                : "bg-red-600 text-white hover:bg-red-700 hover:scale-105 shadow-red-200"
             }`}
           >
             <AlertCircle size={20} />
@@ -308,21 +391,19 @@ export default function LandingPage() {
           </button>
         </div>
 
-        {/* MAIN CONTENT */}
+        {/* MAIN CONTENT WRAPPER */}
         <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col items-center text-center">
           <h1
-            className={`text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight mb-3 max-w-4xl tracking-tight drop-shadow-lg ${
-              isEmergency ? "text-red-700" : "text-white"
+            className={`text-3xl md:text-5xl font-extrabold mb-3 drop-shadow-sm ${
+              isEmergency ? "text-red-600 dark:text-red-400" : "text-blue-900 dark:text-white"
             }`}
           >
-            {isEmergency
-              ? "Emergency Response"
-              : "Real-Time Healthcare Access for Every Citizen"}
+            {isEmergency ? "Emergency Response" : "Real-Time Healthcare Access"}
           </h1>
 
           <p
-            className={`text-base md:text-lg mb-10 max-w-lg font-medium ${
-              isEmergency ? "text-red-600" : "text-blue-100/90"
+            className={`text-lg mb-10 font-medium ${
+              isEmergency ? "text-red-500 dark:text-red-300" : "text-blue-700 dark:text-slate-300"
             }`}
           >
             {isEmergency
@@ -330,17 +411,73 @@ export default function LandingPage() {
               : "Search doctors, hospitals & labs near you."}
           </p>
 
-          {/* --- RESPONSIVE GRID LAYOUT --- */}
+          {/* GRID LAYOUT: Left (OPD), Center (Search), Right (Services) */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left relative z-20">
-            {/* 1. SEARCH SECTION */}
-            <div className="flex flex-col gap-4 w-full order-1 lg:order-2 relative z-50">
-              {/* === REDESIGNED SEARCH BAR === */}
+            {/* 1. LEFT PANEL: LIVE OPD (White Card, Green Accents) */}
+            {!isEmergency && (
               <div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 relative w-full border border-white/20 z-50"
+                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
+                style={{ zIndex: 10 }}
+              >
+                {/* Decorative top accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
+
+                <div className="flex items-center gap-3 border-b border-blue-100 dark:border-slate-700 pb-3">
+                  <div className="bg-emerald-50 dark:bg-emerald-900/30 p-2 rounded-lg group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 transition-colors">
+                    <Clock className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-blue-900 dark:text-white">
+                      Live OPD
+                    </h3>
+                    <p className="text-xs text-blue-600 dark:text-slate-400">Real-time Queue</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-800 dark:text-slate-300 font-medium">
+                      KGMU Lucknow
+                    </span>
+                    <span className="font-bold text-white bg-orange-500 px-2 py-0.5 rounded text-xs shadow-sm">
+                      45 Waiting
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-800 dark:text-slate-300 font-medium">Ursula</span>
+                    <span className="font-bold text-white bg-emerald-500 px-2 py-0.5 rounded text-xs shadow-sm">
+                      12 Waiting
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-blue-800 dark:text-slate-300 font-medium">
+                      LLR Hospital
+                    </span>
+                    <span className="font-bold text-white bg-blue-500 px-2 py-0.5 rounded text-xs shadow-sm">
+                      Open
+                    </span>
+                  </div>
+                </div>
+
+                <button className="mt-auto w-full py-2 bg-blue-50 dark:bg-slate-700 hover:bg-blue-100 dark:hover:bg-slate-600 text-blue-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-blue-200 dark:border-slate-600 transition-all flex items-center justify-center gap-1">
+                  View All Centers <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* 2. CENTER PANEL: SEARCH SECTION */}
+            <div className="flex flex-col gap-4 w-full order-1 lg:order-2 relative z-50">
+              {/* SEARCH BOX CONTAINER */}
+              <div
+                className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-blue-100/50 dark:shadow-slate-900/50 p-2 relative w-full transition-all z-[100] ${
+                  inputError
+                    ? "ring-2 ring-red-100 dark:ring-red-900/30"
+                    : ""
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 {!isEmergency && (
-                  <div className="flex gap-1 mb-2 bg-gray-100/50 p-1 rounded-xl relative z-10">
+                  <div className="flex gap-1 mb-2 bg-blue-100 dark:bg-slate-700 p-1 rounded-xl">
                     {["doctors", "hospitals", "labs"].map((tab) => (
                       <button
                         key={tab}
@@ -348,10 +485,10 @@ export default function LandingPage() {
                           setActiveTab(tab);
                           setSearchQuery("");
                         }}
-                        className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold capitalize transition-all ${
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
                           activeTab === tab
-                            ? "bg-blue-900 text-white shadow-md transform scale-[1.02]"
-                            : "text-gray-500 hover:bg-white hover:text-gray-700"
+                            ? "bg-white dark:bg-slate-600 text-blue-700 dark:text-white shadow-sm border border-blue-300 dark:border-slate-600" // Active Light/Dark Theme
+                            : "text-blue-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-700 dark:hover:text-white"
                         }`}
                       >
                         {tab}
@@ -360,108 +497,130 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {/* THE SPLIT SEARCH CONTAINER */}
-                <div className="flex flex-col md:flex-row gap-2 relative z-50">
-                  {/* LEFT: LOCATION INPUT */}
-                  <div className="relative md:w-1/3 w-full">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-                      <MapPin
-                        size={20}
-                        className={userLocation ? "text-blue-600" : ""}
-                      />
-                    </div>
+                <div className="flex flex-col md:flex-row gap-2 relative">
+                  {/* LOCATION INPUT */}
+                  <div className="relative md:w-1/4 w-full">
+                    <MapPin
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={20}
+                    />
                     <input
                       ref={locationInputRef}
                       type="text"
                       readOnly
-                      value={locationQuery}
+                      value={locationQuery || ""}
                       placeholder="Select Location"
-                      className={`w-full pl-10 pr-10 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border rounded-xl focus:bg-white outline-none transition-all ${
+                      className={`w-full pl-10 pr-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border rounded-xl outline-none text-sm text-blue-900 dark:text-slate-200 placeholder-blue-500 dark:placeholder-slate-400 ${
                         locationError
-                          ? "border-red-500 ring-2 ring-red-200 animate-pulse"
-                          : "border-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20"
+                          : "border-blue-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-600 focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500"
                       }`}
                     />
                     <button
                       onClick={getUserLocation}
-                      disabled={isLocating}
-                      title="Detect my location"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors z-20"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
                     >
                       {isLocating ? (
                         <Loader2 size={18} className="animate-spin" />
                       ) : (
-                        <Navigation size={18} className="fill-blue-100" />
+                        <Navigation size={18} />
                       )}
                     </button>
                   </div>
 
-                  {/* DIVIDER (Visible on Desktop) */}
-                  <div className="hidden md:block w-px bg-gray-300 my-2"></div>
+                  <div className="hidden md:block w-px bg-gray-200 my-2"></div>
 
-                  {/* RIGHT: SEARCH INPUT */}
+                  {/* SEARCH INPUT */}
                   <div className="flex-1 relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                       {isEmergency ? (
                         <Ambulance size={20} className="text-red-500" />
                       ) : (
                         <Search size={20} />
                       )}
                     </div>
+
                     <input
+                      ref={searchInputRef}
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setInputError(false);
+                      }}
                       onKeyDown={handleKeyDown}
                       placeholder={
                         isEmergency
-                          ? "Ambulance type..."
-                          : `Search ${activeTab}, symptoms...`
+                          ? "Ambulance..."
+                          : activeTab === "hospitals"
+                          ? "Search 'City Hospital'..."
+                          : activeTab === "labs"
+                          ? "Search 'CBC', 'MRI'..."
+                          : "Search 'Dr. Gupta'..."
                       }
-                      className="w-full pl-10 py-3 text-base font-medium text-gray-900 bg-gray-50/50 border border-transparent rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all relative z-10"
+                      className="w-full pl-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border border-blue-200 dark:border-slate-600 rounded-xl focus:bg-white dark:focus:bg-slate-600 text-sm text-blue-900 dark:text-slate-200 outline-none focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500 placeholder-blue-500 dark:placeholder-slate-400"
                       onFocus={() =>
                         searchQuery.length > 0 && setShowSuggestions(true)
                       }
                     />
 
-                    {/* Suggestions Dropdown */}
-                    {showSuggestions && !isEmergency && (
-                      <div
-                        className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-[300px] overflow-y-auto"
-                        style={{ zIndex: 9999 }}
-                      >
-                        {suggestions.map((item) => (
-                          <div
-                            key={item.id}
-                            onClick={() => handleSuggestionClick(item)}
-                            className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 group"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
-                                {getIcon(item.kind)}
+                    {/* SUGGESTIONS DROPDOWN */}
+                    {showSuggestions &&
+                      !isEmergency &&
+                      suggestions.length > 0 && (
+                        <div className="absolute top-[calc(100%+10px)] left-0 right-0 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-blue-200 dark:border-slate-700 overflow-hidden max-h-[300px] overflow-y-auto z-[200] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-blue-200 [&::-webkit-scrollbar-thumb]:dark:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full">
+                          {suggestions.map((item, idx) => (
+                            <div
+                              key={`${item.id}-${idx}`}
+                              onClick={() => handleSuggestionClick(item)}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 dark:hover:bg-slate-700 cursor-pointer border-b border-blue-100 dark:border-slate-700 group"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    item.kind === "category"
+                                      ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                                      : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                                  }`}
+                                >
+                                  {getIcon(item.kind)}
+                                </div>
+                                <div className="text-left">
+                                  <p className="font-bold text-blue-900 dark:text-white text-sm">
+                                    {item.name}
+                                    {item.kind === "category" && (
+                                      <span className="ml-2 text-[10px] border border-orange-200 bg-orange-50 text-orange-600 px-1 rounded uppercase">
+                                        Category
+                                      </span>
+                                    )}
+                                    {item.kind === "test" && (
+                                      <span className="ml-2 text-[10px] border border-blue-200 bg-blue-50 text-blue-600 px-1 rounded uppercase">
+                                        Test
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-blue-600 dark:text-slate-400 capitalize">
+                                    {item.category || item.kind}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-bold text-gray-900 text-sm">
-                                  {item.name}
-                                </p>
-                                <p className="text-xs text-gray-500 capitalize">
-                                  {item.category}
-                                </p>
-                              </div>
+                              <ChevronRight
+                                size={16}
+                                className="text-blue-300 dark:text-slate-600 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                              />
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
                   </div>
 
-                  {/* SEARCH BUTTON */}
+                  {/* ORANGE SEARCH BUTTON */}
                   <button
-                    onClick={handleSearchBtnClick}
-                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-lg whitespace-nowrap transition-transform active:scale-95 relative z-10 ${
+                    onClick={() => executeSearch()}
+                    className={`px-6 py-3 font-bold text-white rounded-xl shadow-lg transition-transform active:scale-95 ${
                       isEmergency
                         ? "bg-red-600 hover:bg-red-700"
-                        : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                        : "bg-orange-500 hover:bg-orange-600 dark:bg-orange-500 dark:hover:bg-orange-600 shadow-orange-200 dark:shadow-orange-900/50"
                     }`}
                   >
                     Search
@@ -469,23 +628,25 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* B. DYNAMIC CATEGORIES */}
+              {/* DYNAMIC CATEGORY BUTTONS (Bright Blue Theme) */}
               {!isEmergency && (
-                <div
-                  className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative"
-                  style={{ zIndex: 0 }}
-                >
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative z-0">
                   {currentCategories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => handleCategoryClick(cat.id)}
-                      className="flex flex-col items-center justify-center group bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl p-3 transition-all hover:-translate-y-1 hover:shadow-lg backdrop-blur-sm"
+                      onClick={() =>
+                        executeSearch(
+                          cat.label,
+                          activeTab === "labs" ? "test" : null
+                        )
+                      }
+                      className="flex flex-col items-center justify-center group bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-blue-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-slate-600 rounded-xl p-3 min-h-[90px] transition-all hover:-translate-y-1 hover:shadow-lg shadow-sm"
                     >
                       <cat.icon
                         size={24}
-                        className="text-blue-200 group-hover:text-white mb-2 transition-colors"
+                        className="text-blue-500 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 mb-2 transition-colors"
                       />
-                      <span className="text-xs font-medium text-blue-100 group-hover:text-white transition-colors">
+                      <span className="text-xs font-medium text-blue-700 dark:text-slate-300 group-hover:text-blue-900 dark:group-hover:text-white transition-colors text-center leading-tight">
                         {cat.label}
                       </span>
                     </button>
@@ -494,154 +655,70 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* 2. LIVE OPD PANEL */}
+            {/* 3. RIGHT PANEL: QUICK SERVICES (White Card, Blue Accents) */}
             {!isEmergency && (
               <div
-                className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative"
-                style={{ zIndex: 0 }}
+                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
+                style={{ zIndex: 10 }}
               >
-                <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                  <div className="bg-green-500/20 p-2 rounded-lg group-hover:bg-green-500/30 transition-colors animate-pulse">
-                    <Clock className="h-6 w-6 text-green-400 " />
+                {/* Decorative top accent */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-500"></div>
+
+                <div className="flex items-center gap-3 border-b border-blue-100 dark:border-slate-700 pb-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                    <List className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Live OPD</h3>
-                    <p className="text-xs text-blue-200">Real-time Queue</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">
-                      KGMU Lucknow
-                    </span>
-                    <span className="font-bold text-white bg-orange-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
-                      45 Waiting
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">Ursula</span>
-                    <span className="font-bold text-white bg-green-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
-                      12 Waiting
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-100 font-medium">
-                      LLR Hospital
-                    </span>
-                    <span className="font-bold text-white bg-blue-500/80 px-2 py-0.5 rounded text-xs shadow-sm">
-                      Open
-                    </span>
-                  </div>
-                </div>
-
-                <button className="mt-auto w-full py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center justify-center gap-1 group-hover:border-white/20">
-                  View All Centers <ChevronRight size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* 3. QUICK ACTIONS */}
-            {!isEmergency && (
-              <div
-                className="w-full bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] hover:bg-white/15 group relative"
-                style={{ zIndex: 0 }}
-              >
-                <div className="flex items-center gap-3 border-b border-white/10 pb-3">
-                  <div className="bg-blue-500/20 p-2 rounded-lg group-hover:bg-blue-500/30 transition-colors">
-                    <List className="h-6 w-6 text-blue-300" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">Services</h3>
-                    <p className="text-xs text-blue-200">Quick Access</p>
+                    <h3 className="text-lg font-bold text-blue-900 dark:text-white">
+                      Services
+                    </h3>
+                    <p className="text-xs text-blue-600 dark:text-slate-400">Quick Access</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => navigate("/labs/track")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-300 group-hover/btn:bg-orange-500 group-hover/btn:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 group-hover/btn:bg-orange-500 dark:group-hover/btn:bg-orange-600 group-hover/btn:text-white transition-all">
                       <FileText size={16} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Track Report</p>
-                      <p className="text-[10px] text-blue-200">Lab Status</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">Lab Status</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("hospitals")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-300 group-hover/btn:bg-green-500 group-hover/btn:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 dark:group-hover/btn:bg-emerald-600 group-hover/btn:text-white transition-all">
                       <Building size={16} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Hospitals</p>
-                      <p className="text-[10px] text-blue-200">View List</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">View List</p>
                     </div>
                   </button>
                   <button
                     onClick={() => setActiveTab("doctors")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 text-white transition-colors text-left group/btn"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
                   >
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 group-hover/btn:bg-purple-500 group-hover/btn:text-white transition-all">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover/btn:bg-blue-600 dark:group-hover/btn:bg-blue-500 group-hover/btn:text-white transition-all">
                       <User size={16} />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Doctors</p>
-                      <p className="text-[10px] text-blue-200">Specialists</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">Specialists</p>
                     </div>
                   </button>
                 </div>
               </div>
             )}
           </div>
-
-          {/* 4. SCROLL BUTTON */}
-          {!isEmergency && (
-            <div className="mt-12 mb-6 animate-bounce">
-              <button
-                onClick={scrollToForum}
-                className="flex flex-col items-center text-blue-200 hover:text-white transition-colors gap-2 group"
-              >
-                <span className="text-sm font-semibold tracking-widest uppercase opacity-80 group-hover:opacity-100">
-                  Browse Health Questions
-                </span>
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-sm group-hover:bg-white/20 transition-all">
-                  <ArrowDown size={20} className="text-white" />
-                </div>
-              </button>
-            </div>
-          )}
         </div>
       </section>
-
-      {/* HEALTH FORUM / BLOG HIGHLIGHTS */}
-      {!isEmergency && (
-        <section
-          ref={forumRef}
-          className="py-16 bg-white relative z-10 border-b border-gray-100"
-        >
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center text-gray-400 py-10">
-              <h3 className="text-xl">Health Questions Section</h3>
-              <p>(Content from previous code)</p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* TRUST SECTION */}
-      {!isEmergency && (
-        <section className="py-20 bg-gray-50 relative z-10">
-          <div className="text-center text-gray-400 py-10">
-            <h3 className="text-xl">Trust Section</h3>
-            <p>(Content from previous code)</p>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

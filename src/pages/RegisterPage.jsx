@@ -155,22 +155,25 @@ export default function RegisterPage() {
   // --- SUCCESS SCREEN ---
   if (registrationSuccess) {
     return (
-      <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+        {/* Dark mode background overlay */}
+        <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
+        
         <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
+          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
         <div className="w-full max-w-md relative z-10">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-white/10 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle size={48} className="text-green-600" />
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-blue-200 dark:border-slate-700 text-center transition-colors duration-300">
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle size={48} className="text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Registration Successful!
             </h2>
-            <p className="text-gray-600 text-lg mb-8">
+            <p className="text-gray-600 dark:text-gray-300 text-lg mb-8">
               Your account has been created.
             </p>
             <button
@@ -188,10 +191,13 @@ export default function RegisterPage() {
 
   // --- REGISTRATION FORM (2-COLUMN LAYOUT) ---
   return (
-    <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+      {/* Dark mode background overlay */}
+      <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
+      
       {/* Background Pattern */}
       <div
-        className="absolute inset-0 opacity-10 pointer-events-none"
+        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}
@@ -200,26 +206,14 @@ export default function RegisterPage() {
       {/* Changed max-w-md to max-w-2xl for wider 2-column layout */}
       <div className="w-full max-w-2xl relative z-10">
         {/* Registration Card */}
-        <div className="bg-white rounded-3xl shadow-2xl mt-16 p-6 md:p-8 border-4 border-white/10">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 md:p-8 border border-blue-200 dark:border-slate-700 transition-colors duration-300">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
               Create Account
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 dark:text-gray-300 text-sm">
               Join thousands using digital healthcare
             </p>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className="flex items-center justify-center space-x-4 mb-6 pb-4 border-b border-gray-100">
-            <div className="flex items-center space-x-2 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-              <Shield size={14} className="text-blue-600" />
-              <span>Secure</span>
-            </div>
-            <div className="flex items-center space-x-2 text-xs font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
-              <CheckCircle size={14} className="text-green-600" />
-              <span>Verified</span>
-            </div>
           </div>
 
           {/* FORM GRID: 1 Column on Mobile, 2 Columns on Desktop */}
@@ -228,13 +222,13 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-bold text-gray-700 mb-2"
+                className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
               >
                 Email Address
               </label>
               <div className="relative">
                 <Mail
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   size={20}
                 />
                 <input
@@ -243,10 +237,10 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="name@email.com"
-                  className={`w-full pl-12 pr-4 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors ${
+                  className={`w-full pl-12 pr-4 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors dark:text-white dark:placeholder-gray-500 ${
                     fieldErrors.email
-                      ? "border-red-500 focus:border-red-600 bg-red-50"
-                      : "border-gray-200 focus:border-blue-600 bg-gray-50 focus:bg-white"
+                      ? "border-red-500 dark:border-red-500 focus:border-red-600 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-slate-600 focus:border-blue-600 dark:focus:border-blue-500 bg-gray-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700"
                   }`}
                 />
               </div>
@@ -262,13 +256,13 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="mobile"
-                className="block text-sm font-bold text-gray-700 mb-2"
+                className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
               >
                 Mobile Number
               </label>
               <div className="relative">
                 <Phone
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   size={20}
                 />
                 <input
@@ -277,10 +271,10 @@ export default function RegisterPage() {
                   value={formData.mobile}
                   onChange={handleMobileChange}
                   placeholder="10-digit mobile"
-                  className={`w-full pl-12 pr-4 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors ${
+                  className={`w-full pl-12 pr-4 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors dark:text-white dark:placeholder-gray-500 ${
                     fieldErrors.mobile
-                      ? "border-red-500 focus:border-red-600 bg-red-50"
-                      : "border-gray-200 focus:border-blue-600 bg-gray-50 focus:bg-white"
+                      ? "border-red-500 dark:border-red-500 focus:border-red-600 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-slate-600 focus:border-blue-600 dark:focus:border-blue-500 bg-gray-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700"
                   }`}
                 />
               </div>
@@ -296,13 +290,13 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-bold text-gray-700 mb-2"
+                className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
               >
                 Create Password
               </label>
               <div className="relative">
                 <Lock
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   size={20}
                 />
                 <input
@@ -313,15 +307,15 @@ export default function RegisterPage() {
                     handleInputChange("password", e.target.value)
                   }
                   placeholder="Min 6 chars"
-                  className={`w-full pl-12 pr-12 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors ${
+                  className={`w-full pl-12 pr-12 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors dark:text-white dark:placeholder-gray-500 ${
                     fieldErrors.password
-                      ? "border-red-500 focus:border-red-600 bg-red-50"
-                      : "border-gray-200 focus:border-blue-600 bg-gray-50 focus:bg-white"
+                      ? "border-red-500 dark:border-red-500 focus:border-red-600 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-slate-600 focus:border-blue-600 dark:focus:border-blue-500 bg-gray-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700"
                   }`}
                 />
                 <button
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   type="button"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -339,13 +333,13 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirm_password"
-                className="block text-sm font-bold text-gray-700 mb-2"
+                className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
               >
                 Confirm Password
               </label>
               <div className="relative">
                 <Lock
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
                   size={20}
                 />
                 <input
@@ -356,15 +350,15 @@ export default function RegisterPage() {
                     handleInputChange("confirm_password", e.target.value)
                   }
                   placeholder="Re-enter password"
-                  className={`w-full pl-12 pr-12 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors ${
+                  className={`w-full pl-12 pr-12 py-3 text-base font-medium border-2 rounded-xl focus:outline-none transition-colors dark:text-white dark:placeholder-gray-500 ${
                     fieldErrors.confirm_password
-                      ? "border-red-500 focus:border-red-600 bg-red-50"
-                      : "border-gray-200 focus:border-blue-600 bg-gray-50 focus:bg-white"
+                      ? "border-red-500 dark:border-red-500 focus:border-red-600 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-slate-600 focus:border-blue-600 dark:focus:border-blue-500 bg-gray-50 dark:bg-slate-700 focus:bg-white dark:focus:bg-slate-700"
                   }`}
                 />
                 <button
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   type="button"
                 >
                   {showConfirmPassword ? (
@@ -375,7 +369,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {fieldErrors.confirm_password && (
-                <div className="flex items-center space-x-2 mt-1 text-red-600 text-xs">
+                <div className="flex items-center space-x-2 mt-1 text-red-600 dark:text-red-400 text-xs">
                   <AlertCircle size={12} />
                   <span>{fieldErrors.confirm_password}</span>
                 </div>
