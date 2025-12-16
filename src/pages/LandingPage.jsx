@@ -350,7 +350,7 @@ export default function LandingPage() {
       {!isEmergency && (
         <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
       )}
-      
+
       {/* HERO SECTION */}
       <section
         className={`relative flex min-h-screen flex-col justify-center items-center px-4 py-6 ${
@@ -376,7 +376,7 @@ export default function LandingPage() {
           />
         )}
 
-        {/* Emergency Toggle */}
+        {/* Emergency Toggle 
         <div className="fixed bottom-6 right-6 z-[9999]">
           <button
             onClick={() => setIsEmergency(!isEmergency)}
@@ -389,13 +389,16 @@ export default function LandingPage() {
             <AlertCircle size={20} />
             {isEmergency ? "EXIT SOS" : "EMERGENCY SOS"}
           </button>
-        </div>
+        </div> 
+        */}
 
         {/* MAIN CONTENT WRAPPER */}
         <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col items-center text-center">
           <h1
             className={`text-3xl md:text-5xl font-extrabold mb-3 drop-shadow-sm ${
-              isEmergency ? "text-red-600 dark:text-red-400" : "text-blue-900 dark:text-white"
+              isEmergency
+                ? "text-red-600 dark:text-red-400"
+                : "text-blue-900 dark:text-white"
             }`}
           >
             {isEmergency ? "Emergency Response" : "Real-Time Healthcare Access"}
@@ -403,7 +406,9 @@ export default function LandingPage() {
 
           <p
             className={`text-lg mb-10 font-medium ${
-              isEmergency ? "text-red-500 dark:text-red-300" : "text-blue-700 dark:text-slate-300"
+              isEmergency
+                ? "text-red-500 dark:text-red-300"
+                : "text-blue-700 dark:text-slate-300"
             }`}
           >
             {isEmergency
@@ -430,7 +435,9 @@ export default function LandingPage() {
                     <h3 className="text-lg font-bold text-blue-900 dark:text-white">
                       Live OPD
                     </h3>
-                    <p className="text-xs text-blue-600 dark:text-slate-400">Real-time Queue</p>
+                    <p className="text-xs text-blue-600 dark:text-slate-400">
+                      Real-time Queue
+                    </p>
                   </div>
                 </div>
 
@@ -444,7 +451,9 @@ export default function LandingPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-blue-800 dark:text-slate-300 font-medium">Ursula</span>
+                    <span className="text-blue-800 dark:text-slate-300 font-medium">
+                      Ursula
+                    </span>
                     <span className="font-bold text-white bg-emerald-500 px-2 py-0.5 rounded text-xs shadow-sm">
                       12 Waiting
                     </span>
@@ -470,9 +479,7 @@ export default function LandingPage() {
               {/* SEARCH BOX CONTAINER */}
               <div
                 className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-blue-100/50 dark:shadow-slate-900/50 p-2 relative w-full transition-all z-[100] ${
-                  inputError
-                    ? "ring-2 ring-red-100 dark:ring-red-900/30"
-                    : ""
+                  inputError ? "ring-2 ring-red-100 dark:ring-red-900/30" : ""
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -672,7 +679,9 @@ export default function LandingPage() {
                     <h3 className="text-lg font-bold text-blue-900 dark:text-white">
                       Services
                     </h3>
-                    <p className="text-xs text-blue-600 dark:text-slate-400">Quick Access</p>
+                    <p className="text-xs text-blue-600 dark:text-slate-400">
+                      Quick Access
+                    </p>
                   </div>
                 </div>
 
@@ -686,7 +695,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Track Report</p>
-                      <p className="text-[10px] text-blue-600 dark:text-slate-400">Lab Status</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
+                        Lab Status
+                      </p>
                     </div>
                   </button>
                   <button
@@ -698,7 +709,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Hospitals</p>
-                      <p className="text-[10px] text-blue-600 dark:text-slate-400">View List</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
+                        View List
+                      </p>
                     </div>
                   </button>
                   <button
@@ -710,7 +723,9 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-bold">Doctors</p>
-                      <p className="text-[10px] text-blue-600 dark:text-slate-400">Specialists</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
+                        Specialists
+                      </p>
                     </div>
                   </button>
                 </div>
