@@ -18,6 +18,7 @@ import {
   Eye,
   Baby,
   ChevronRight,
+  ChevronDown, // Added ChevronDown
   FileText,
   List,
   Scan,
@@ -126,9 +127,10 @@ const CATEGORIES = {
   hospitals: [
     { icon: Building, label: "Multispeciality", id: "MULTISPECIALITY" },
     { icon: Activity, label: "Trauma Center", id: "TRAUMA" },
-    { icon: Heart, label: "Heart Institute", id: "CARDIOLOGY_CENTER" },
-    { icon: Baby, label: "Maternity Home", id: "MATERNITY_HOME" },
-    { icon: Eye, label: "Eye Center", id: "EYE_HOSPITAL" },
+    { icon: Heart, label: "Heart Institute", id: "CARDIOLOGY" },
+    { icon: Baby, label: "Maternity Home", id: "GYNAECOLOGY" },
+    { icon: Eye, label: "Eye Center", id: "OPHTHALMOLOGY" },
+    { icon: Building, label: "Cancer Center", id: "CANCER" },
   ],
   labs: [
     { icon: Droplet, label: "CBC Test", id: "CBC" },
@@ -138,6 +140,13 @@ const CATEGORIES = {
     { icon: Scan, label: "X-Ray", id: "XRAY" },
     { icon: Thermometer, label: "Fever Panel", id: "FEVER" },
   ],
+};
+
+// City Coordinates for Dropdown
+const CITY_COORDINATES = {
+  Kanpur: { lat: 26.4499, lon: 80.3319 },
+  Lucknow: { lat: 26.8467, lon: 80.9462 },
+  Delhi: { lat: 28.7041, lon: 77.1025 },
 };
 
 export default function LandingPage() {
@@ -155,6 +164,7 @@ export default function LandingPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [apiHospitals, setApiHospitals] = useState([]);
+  const [hospitalServices, setHospitalServices] = useState([]);
   const [searchIndex, setSearchIndex] = useState([]);
 
   // UI State
@@ -194,6 +204,33 @@ export default function LandingPage() {
     fetchHospitals();
   }, []);
 
+  // --- 1b. FETCH HOSPITAL SERVICES (CATEGORIES) ---
+  useEffect(() => {
+    const fetchHospitalServices = async () => {
+      try {
+        const response = await fetch("/api/clinics/services/");
+        if (response.ok) {
+          const data = await response.json();
+          // Example response:
+          // [{ id: 6, name: "CARDIOLOGY" }, ...]
+          const formattedServices = (Array.isArray(data) ? data : []).map(
+            (svc, idx) => ({
+              id: svc.id ?? `service-${idx}`,
+              name: svc.name ?? "Hospital Service",
+              category: "Hospital Service",
+              kind: "category",
+              tabs: ["hospitals"],
+            })
+          );
+          setHospitalServices(formattedServices);
+        }
+      } catch (error) {
+        console.error("Error fetching hospital services:", error);
+      }
+    };
+    fetchHospitalServices();
+  }, []);
+
   // --- 2. BUILD SEARCH INDEX ---
   useEffect(() => {
     const categoryItems = [];
@@ -209,9 +246,13 @@ export default function LandingPage() {
       });
     });
 
-    const mergedData = [...SEARCH_DATABASE, ...apiHospitals, ...categoryItems];
+    const mergedData = [
+      ...SEARCH_DATABASE,
+      ...apiHospitals,
+      ...hospitalServices,
+    ];
     setSearchIndex(mergedData);
-  }, [apiHospitals]);
+  }, [apiHospitals, hospitalServices]);
 
   // --- 3. CONFIGURE FUSE.JS ---
   const fuse = useMemo(() => {
@@ -242,8 +283,19 @@ export default function LandingPage() {
     }
   }, [searchQuery, activeTab, isEmergency, fuse]);
 
+  // --- Helper: resolve category/service to backend service name ---
+  const resolveServiceParam = (input) => {
+    if (!input) return null;
+    // IDs are already normalized; pass them through as lowercase
+    return String(input).trim().toLowerCase();
+  };
+
   // --- 5. EXECUTE SEARCH ---
-  const executeSearch = (overrideQuery = null, overrideType = null) => {
+  const executeSearch = (
+    overrideQuery = null,
+    overrideType = null,
+    overrideService = null
+  ) => {
     if (isEmergency) return alert("Connecting to 108...");
 
     const queryToUse = overrideQuery || searchQuery;
@@ -255,7 +307,32 @@ export default function LandingPage() {
       return;
     }
 
-    if (!userLocation) {
+    // Resolve coordinates: prefer userLocation, otherwise use selected preset
+    let targetLat = userLocation?.lat ?? null;
+    let targetLon = userLocation?.lon ?? null;
+    if (
+      (!targetLat || !targetLon) &&
+      selectedLocationKey &&
+      selectedLocationKey !== "custom"
+    ) {
+      const preset = PRESET_LOCATIONS.find(
+        (p) => p.key === selectedLocationKey
+      );
+      if (preset) {
+        if (preset.getLatLon) {
+          const loc = preset.getLatLon();
+          if (loc) {
+            targetLat = loc.lat;
+            targetLon = loc.lon;
+          }
+        } else {
+          targetLat = preset.lat;
+          targetLon = preset.lon;
+        }
+      }
+    }
+
+    if (!targetLat || !targetLon) {
       setLocationError(true);
       locationInputRef.current?.focus();
       return;
@@ -264,8 +341,14 @@ export default function LandingPage() {
     const params = new URLSearchParams();
     params.set("q", queryToUse);
     params.set("type", overrideType || activeTab);
-    params.set("lat", userLocation.lat);
-    params.set("lon", userLocation.lon);
+    params.set("lat", String(targetLat));
+    params.set("lon", String(targetLon));
+
+    // If caller passed a service/category key, resolve it to backend service
+    if (overrideService) {
+      const svc = resolveServiceParam(overrideService || queryToUse);
+      if (svc) params.set("service", svc);
+    }
 
     navigate(`/search?${params.toString()}`);
   };
@@ -279,7 +362,7 @@ export default function LandingPage() {
 
   const handleSuggestionClick = (item) => {
     if (item.kind === "category") {
-      executeSearch(item.name);
+      executeSearch(item.name, null, item.name);
     } else if (item.kind === "doctor") {
       navigate(`/doctor/${item.id}`);
     } else if (item.kind === "hospital") {
@@ -317,6 +400,18 @@ export default function LandingPage() {
     }
   };
 
+  const handleLocationSelect = (e) => {
+    const selected = e.target.value;
+    setLocationQuery(selected);
+    setLocationError(false);
+
+    if (selected === "Near Me") {
+      getUserLocation();
+    } else if (CITY_COORDINATES[selected]) {
+      setUserLocation(CITY_COORDINATES[selected]);
+    }
+  };
+
   // --- ICON HELPER ---
   const getIcon = (kind) => {
     switch (kind) {
@@ -339,7 +434,7 @@ export default function LandingPage() {
 
   return (
     <div
-      className={`min-h-screen font-sans overflow-x-hidden w-full relative transition-colors duration-500 ${
+      className={`min-h-screen font-sans overflow-hidden w-full relative transition-colors duration-500 ${
         isEmergency
           ? "bg-red-50 dark:bg-red-900/20"
           : "bg-gradient-to-br from-blue-50 via-white to-cyan-50" // BRIGHT BLUE GRADIENT
@@ -357,7 +452,7 @@ export default function LandingPage() {
           isEmergency ? "pt-20" : "pt-32 pb-20"
         }`}
       >
-        {/* Background Pattern (Subtle dots for light theme, plus signs for dark) */}
+        {/* Background Pattern */}
         {!isEmergency && (
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0"
@@ -375,22 +470,6 @@ export default function LandingPage() {
             }}
           />
         )}
-
-        {/* Emergency Toggle 
-        <div className="fixed bottom-6 right-6 z-[9999]">
-          <button
-            onClick={() => setIsEmergency(!isEmergency)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-2xl transition-all ${
-              isEmergency
-                ? "bg-white text-red-600 animate-pulse border-4 border-red-600"
-                : "bg-red-600 text-white hover:bg-red-700 hover:scale-105 shadow-red-200"
-            }`}
-          >
-            <AlertCircle size={20} />
-            {isEmergency ? "EXIT SOS" : "EMERGENCY SOS"}
-          </button>
-        </div> 
-        */}
 
         {/* MAIN CONTENT WRAPPER */}
         <div className="w-full max-w-7xl mx-auto relative z-10 flex flex-col items-center text-center">
@@ -418,13 +497,12 @@ export default function LandingPage() {
 
           {/* GRID LAYOUT: Left (OPD), Center (Search), Right (Services) */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left relative z-20">
-            {/* 1. LEFT PANEL: LIVE OPD (White Card, Green Accents) */}
+            {/* 1. LEFT PANEL: LIVE OPD */}
             {!isEmergency && (
               <div
                 className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
                 style={{ zIndex: 10 }}
               >
-                {/* Decorative top accent */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
 
                 <div className="flex items-center gap-3 border-b border-blue-100 dark:border-slate-700 pb-3">
@@ -494,7 +572,7 @@ export default function LandingPage() {
                         }}
                         className={`flex-1 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
                           activeTab === tab
-                            ? "bg-white dark:bg-slate-600 text-blue-700 dark:text-white shadow-sm border border-blue-300 dark:border-slate-600" // Active Light/Dark Theme
+                            ? "bg-white dark:bg-slate-600 text-blue-700 dark:text-white shadow-sm border border-blue-300 dark:border-slate-600"
                             : "text-blue-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-600 hover:text-blue-700 dark:hover:text-white"
                         }`}
                       >
@@ -505,34 +583,42 @@ export default function LandingPage() {
                 )}
 
                 <div className="flex flex-col md:flex-row gap-2 relative">
-                  {/* LOCATION INPUT */}
-                  <div className="relative md:w-1/4 w-full">
+                  {/* --- UPDATED LOCATION SELECTOR DROPDOWN --- */}
+                  <div className="relative md:w-1/4 w-full group">
                     <MapPin
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors z-10 ${
+                        isLocating
+                          ? "text-blue-500 animate-pulse"
+                          : "text-gray-400 group-hover:text-blue-500"
+                      }`}
                       size={20}
                     />
-                    <input
+                    <select
                       ref={locationInputRef}
-                      type="text"
-                      readOnly
-                      value={locationQuery || ""}
-                      placeholder="Select Location"
-                      className={`w-full pl-10 pr-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border rounded-xl outline-none text-sm text-blue-900 dark:text-slate-200 placeholder-blue-500 dark:placeholder-slate-400 ${
+                      value={locationQuery || "Near Me"}
+                      onChange={handleLocationSelect}
+                      className={`w-full pl-10 pr-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border rounded-xl outline-none text-sm text-blue-900 dark:text-slate-200 appearance-none cursor-pointer ${
                         locationError
                           ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20"
-                          : "border-blue-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-600 focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500"
+                          : "border-blue-200 dark:border-slate-600 hover:border-blue-400 focus:bg-white dark:focus:bg-slate-600 focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500"
                       }`}
-                    />
-                    <button
-                      onClick={getUserLocation}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
                     >
+                      <option value="Near Me">Near Me</option>
+                      <option value="Kanpur">Kanpur</option>
+                      <option value="Lucknow">Lucknow</option>
+                      <option value="Delhi">Delhi</option>
+                    </select>
+
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                       {isLocating ? (
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2
+                          size={16}
+                          className="animate-spin text-blue-500"
+                        />
                       ) : (
-                        <Navigation size={18} />
+                        <ChevronDown size={16} />
                       )}
-                    </button>
+                    </div>
                   </div>
 
                   <div className="hidden md:block w-px bg-gray-200 my-2"></div>
@@ -635,7 +721,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC CATEGORY BUTTONS (Bright Blue Theme) */}
+              {/* DYNAMIC CATEGORY BUTTONS */}
               {!isEmergency && (
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 w-full relative z-0">
                   {currentCategories.map((cat) => (
@@ -644,7 +730,8 @@ export default function LandingPage() {
                       onClick={() =>
                         executeSearch(
                           cat.label,
-                          activeTab === "labs" ? "test" : null
+                          activeTab === "labs" ? "test" : null,
+                          cat.id
                         )
                       }
                       className="flex flex-col items-center justify-center group bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border border-blue-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-slate-600 rounded-xl p-3 min-h-[90px] transition-all hover:-translate-y-1 hover:shadow-lg shadow-sm"
@@ -662,13 +749,12 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* 3. RIGHT PANEL: QUICK SERVICES (White Card, Blue Accents) */}
+            {/* 3. RIGHT PANEL: QUICK SERVICES */}
             {!isEmergency && (
               <div
                 className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
                 style={{ zIndex: 10 }}
               >
-                {/* Decorative top accent */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-500"></div>
 
                 <div className="flex items-center gap-3 border-b border-blue-100 dark:border-slate-700 pb-3">

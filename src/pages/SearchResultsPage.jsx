@@ -13,6 +13,7 @@ import {
   Loader2,
   Phone,
 } from "lucide-react";
+import { useLocationContext } from "../context/LocationContext";
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ export default function SearchResultsPage() {
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
   const service = searchParams.get("service");
-  const maxDistance = searchParams.get("max_distance") || "10000";
+  const maxDistance = searchParams.get("max_distance") || "100";
   const typeParam = searchParams.get("type") || "hospitals";
 
   // --- STATE ---
@@ -34,6 +35,12 @@ export default function SearchResultsPage() {
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("distance");
   const [showHomeCollectionOnly, setShowHomeCollectionOnly] = useState(false);
+
+  // Local search/filter text (start empty — do not copy the query param into the input)
+  const [localSearch, setLocalSearch] = useState("");
+
+  // Location context for 'Current location'
+  const { userLocation, locationQuery } = useLocationContext();
 
   // --- FETCH DATA FROM BACKEND ---
   useEffect(() => {
@@ -47,7 +54,42 @@ export default function SearchResultsPage() {
       setError(null);
 
       try {
-        const apiUrl = `/api/clinics/search/?service=cardiology&lat=${lat}&lon=${lon}&max_distance=${maxDistance}`;
+        // Determine service to query. Prefer explicit 'service' param; else try to map from 'q' or fallback to lowercased q.
+        let serviceToQuery = service || "";
+        const qParam = searchParams.get("q") || "";
+
+        if (!serviceToQuery && qParam) {
+          try {
+            const svcResp = await fetch(`/api/clinics/services/`);
+            if (svcResp.ok) {
+              const svcData = await svcResp.json();
+              const servicesArray = Array.isArray(svcData) ? svcData : [];
+              const qLower = qParam.toLowerCase();
+              const match = servicesArray.find((s) => {
+                if (!s.name) return false;
+                const nameLower = String(s.name).toLowerCase();
+                return (
+                  nameLower === qLower ||
+                  nameLower.includes(qLower) ||
+                  qLower.includes(nameLower)
+                );
+              });
+              if (match) serviceToQuery = String(match.name).toLowerCase();
+              else serviceToQuery = qLower;
+            } else {
+              serviceToQuery = qParam.toLowerCase();
+            }
+          } catch (errSvc) {
+            console.warn("Service lookup failed:", errSvc);
+            serviceToQuery = qParam.toLowerCase();
+          }
+        } else if (serviceToQuery) {
+          serviceToQuery = String(serviceToQuery).toLowerCase();
+        }
+
+        const apiUrl = `/api/clinics/search/?service=${encodeURIComponent(
+          serviceToQuery
+        )}&lat=${lat}&lon=${lon}&max_distance_km=${maxDistance}`;
         console.log("Fetching:", apiUrl);
 
         const response = await fetch(apiUrl);
@@ -78,7 +120,81 @@ export default function SearchResultsPage() {
     };
 
     fetchClinics();
-  }, [lat, lon, service, maxDistance]);
+  }, [lat, lon, service, maxDistance, searchParams]);
+
+  // --- LOCATION PRESETS FOR RESULTS PAGE ---
+  const PRESET_LOCATIONS = [
+    {
+      key: "current",
+      label: locationQuery ? `${locationQuery} (current)` : "Current location",
+      getLatLon: () =>
+        userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : null,
+    },
+    {
+      key: "kanpur",
+      label: "Kanpur",
+      lat: 26.4499,
+      lon: 80.3319,
+    },
+    {
+      key: "lucknow",
+      label: "Lucknow",
+      lat: 26.8467,
+      lon: 80.9462,
+    },
+    {
+      key: "delhi",
+      label: "Delhi",
+      lat: 28.6139,
+      lon: 77.209,
+    },
+  ];
+
+  const [selectedLocationKey, setSelectedLocationKey] = useState(() => {
+    const latNum = lat ? parseFloat(lat) : null;
+    const lonNum = lon ? parseFloat(lon) : null;
+    if (
+      userLocation &&
+      Math.abs(userLocation.lat - latNum) < 0.0001 &&
+      Math.abs(userLocation.lon - lonNum) < 0.0001
+    ) {
+      return "current";
+    }
+    if (latNum === 26.4499 && lonNum === 80.3319) return "kanpur";
+    if (latNum === 26.8467 && lonNum === 80.9462) return "lucknow";
+    if (latNum === 28.6139 && lonNum === 77.209) return "delhi";
+    return "custom";
+  });
+
+  const handleLocationChange = (key) => {
+    setSelectedLocationKey(key);
+
+    let targetLat = lat;
+    let targetLon = lon;
+
+    const preset = PRESET_LOCATIONS.find((p) => p.key === key);
+    if (preset) {
+      if (preset.getLatLon) {
+        const loc = preset.getLatLon();
+        if (!loc) return; // no current location available
+        targetLat = String(loc.lat);
+        targetLon = String(loc.lon);
+      } else {
+        targetLat = String(preset.lat);
+        targetLon = String(preset.lon);
+      }
+    }
+
+    if (!targetLat || !targetLon) return;
+
+    // Only trigger new API call if coordinates actually changed
+    if (targetLat === lat && targetLon === lon) return;
+
+    const params = new URLSearchParams(searchParams);
+    params.set("lat", targetLat);
+    params.set("lon", targetLon);
+    navigate(`/search?${params.toString()}`);
+  };
 
   // --- FILTERING & SORTING LOGIC ---
 
@@ -102,6 +218,21 @@ export default function SearchResultsPage() {
   // --- FIX 2: Defensive check for filtering ---
   const filteredResults = (Array.isArray(results) ? results : [])
     .filter((item) => {
+      // 0. Local text filter (client-side only)
+      const query = localSearch.trim().toLowerCase();
+      if (query) {
+        const name = (
+          item.hospital_name ||
+          item.name ||
+          item.service_name ||
+          ""
+        ).toLowerCase();
+        const category = (item.category || "").toLowerCase();
+        if (!name.includes(query) && !category.includes(query)) {
+          return false;
+        }
+      }
+
       // 1. Type Filter (Govt vs Private)
       if (
         filterType !== "all" &&
@@ -136,7 +267,10 @@ export default function SearchResultsPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex flex-col items-center justify-center pt-20 transition-colors duration-300">
         <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
-        <Loader2 size={48} className="text-white dark:text-white animate-spin mb-4" />
+        <Loader2
+          size={48}
+          className="text-white dark:text-white animate-spin mb-4"
+        />
         <p className="text-blue-700 dark:text-slate-300 font-medium animate-pulse">
           Searching for nearby {service || "services"}...
         </p>
@@ -149,7 +283,7 @@ export default function SearchResultsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 relative font-sans pt-24 pb-20 transition-colors duration-300">
       {/* Dark mode background overlay */}
       <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
-      
+
       {/* Background Pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none fixed z-0"
@@ -158,7 +292,7 @@ export default function SearchResultsPage() {
         }}
       />
 
-      {/* --- PAGE HEADER & FILTERS --- */}
+      {/* --- PAGE HEADER, SEARCH & FILTERS --- */}
       <div className="max-w-3xl mx-auto px-4 mb-6 relative z-10">
         <div className="flex items-center space-x-3 mb-4">
           <button
@@ -177,12 +311,66 @@ export default function SearchResultsPage() {
           </div>
         </div>
 
+        {/* Inline Search + Location (client-side filter + optional new API on location change) */}
+        <div className="mt-2 flex flex-col md:flex-row gap-3">
+          {/* Location select */}
+          <div className="md:w-1/3 w-full">
+            <div className="relative">
+              <MapPin
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <select
+                value={selectedLocationKey}
+                onChange={(e) => handleLocationChange(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 text-sm font-medium text-blue-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500"
+              >
+                <option value="custom" disabled>
+                  Location from search
+                </option>
+                <option value="current" disabled={!userLocation}>
+                  {locationQuery
+                    ? `${locationQuery} (current)`
+                    : "Current location"}
+                </option>
+                <option value="kanpur">Kanpur</option>
+                <option value="lucknow">Lucknow</option>
+                <option value="delhi">Delhi</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Text filter input */}
+          <div className="flex-1">
+            <div className="relative">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                placeholder={
+                  typeParam === "labs"
+                    ? "Filter by test or lab name..."
+                    : "Filter by hospital or service..."
+                }
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 text-sm text-blue-900 dark:text-slate-200 placeholder-blue-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Filters Row */}
-        <div className="flex items-center space-x-3 overflow-x-auto pb-2 hide-scrollbar">
+        <div className="mt-4 flex items-center space-x-3 overflow-x-auto pb-2 hide-scrollbar">
           {typeParam === "labs" ? (
             <>
               <div className="flex items-center space-x-2 bg-blue-50 dark:bg-slate-800/50 rounded-full px-3 py-1.5 border border-blue-200 dark:border-slate-700">
-                <ArrowUpDown size={14} className="text-blue-600 dark:text-slate-300" />
+                <ArrowUpDown
+                  size={14}
+                  className="text-blue-600 dark:text-slate-300"
+                />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -389,10 +577,12 @@ export default function SearchResultsPage() {
             <div className="bg-blue-100 dark:bg-slate-700/50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
               <Search size={32} className="text-blue-600 dark:text-slate-400" />
             </div>
-            <h3 className="text-blue-900 dark:text-white text-xl font-bold">No results found</h3>
+            <h3 className="text-blue-900 dark:text-white text-xl font-bold">
+              No results found
+            </h3>
             <p className="text-blue-700 dark:text-slate-300 mt-2 px-6">
               We couldn't find any {service} services within{" "}
-              {parseInt(maxDistance) / 1000}km.
+              {parseInt(maxDistance)}km.
             </p>
             <button
               onClick={() => navigate("/")}

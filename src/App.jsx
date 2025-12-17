@@ -21,11 +21,10 @@ import RequireAuth from "./components/RequireAuth.jsx";
 
 const AppContent = () => {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/login" || location.pathname === "/register";
-  
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
-      {!hideNavbar && <Navbar />}
+      <Navbar />
       <div className="flex-grow">
         <Routes>
           <Route path="/" element={<LandingPage />} />

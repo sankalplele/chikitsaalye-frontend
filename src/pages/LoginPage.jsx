@@ -7,6 +7,8 @@ import {
   Loader2,
   Shield,
   CheckCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -21,6 +23,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,7 +111,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 flex items-start justify-center pt-24 pb-10 px-4 relative overflow-hidden transition-colors duration-300">
       {/* Dark mode background overlay */}
       <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
       
@@ -206,7 +209,7 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Password Input */}
+            {/* Password Input with Show/Hide */}
             <div>
               <label
                 htmlFor="password"
@@ -221,15 +224,23 @@ export default function LoginPage() {
                 />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     setError("");
                   }}
                   placeholder="Enter your password"
-                  className="w-full pl-12 pr-4 py-3.5 text-lg font-medium border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 dark:bg-slate-700 dark:text-white dark:placeholder-gray-500 focus:bg-white dark:focus:bg-slate-700"
+                  className="w-full pl-12 pr-11 py-3.5 text-lg font-medium border-2 border-gray-200 dark:border-slate-600 rounded-xl focus:border-blue-600 dark:focus:border-blue-500 focus:outline-none transition-colors bg-gray-50 dark:bg-slate-700 dark:text-white dark:placeholder-gray-500 focus:bg-white dark:focus:bg-slate-700"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
