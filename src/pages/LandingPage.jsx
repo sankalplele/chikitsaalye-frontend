@@ -784,7 +784,7 @@ export default function LandingPage() {
                 : "text-blue-900 dark:text-white"
             }`}
           >
-            {isEmergency ? "Emergency Response" : "l-Time Healthcare Access"}
+            {isEmergency ? "Emergency Response" : "Healthcare Access"}
           </h1>
 
           {/* hide native scrollbars for highlight sliders */}
