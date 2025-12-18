@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/:match*",
-      "destination": "https://backend-7-dzo3.onrender.com/:match*"
+      "source": "/api/(.*)",
+      "destination": "https://backend-7-dzo3.onrender.com/$1"
     }
   ]
 }
