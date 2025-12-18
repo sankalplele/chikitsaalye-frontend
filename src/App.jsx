@@ -1,4 +1,5 @@
 import React from "react";
+import { AuthProvider } from "./context/AuthContext";
 import {
   BrowserRouter as Router,
   Routes,
@@ -9,6 +10,7 @@ import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ForumPage from "./pages/ForumPage.jsx";
+import ArticlesPage from "./pages/ArticlesPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -38,6 +40,7 @@ const AppContent = () => {
           <Route path="/hospital/:id" element={<HospitalProfile />} />
           <Route path="/doctor/:id" element={<DoctorProfile />} />
           <Route path="/forum" element={<ForumPage />} />
+          <Route path="/articles" element={<ArticlesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
@@ -49,7 +52,9 @@ const AppContent = () => {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }

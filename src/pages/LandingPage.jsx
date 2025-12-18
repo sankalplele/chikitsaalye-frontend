@@ -33,6 +33,7 @@ import {
   Syringe,
   Dna,
   Brain,
+  ChevronLeft,
 } from "lucide-react";
 
 // --- STATIC DATABASE (Doctors, Labs, AND Specific Tests) ---
@@ -432,6 +433,126 @@ export default function LandingPage() {
 
   const currentCategories = CATEGORIES[activeTab] || CATEGORIES.hospitals;
 
+  // --- HIGHLIGHTS DATA (dummy) ---
+  const doctorArticles = [
+    {
+      id: "a1",
+      title: "Health Tips for Working Professionals",
+      excerpt:
+        "Simple desk exercises and micro-break strategies to reduce neck and back strain.",
+      author: "Dr. Anjali Singh",
+      date: "Dec 10, 2025",
+      image: "https://picsum.photos/seed/a1/800/520",
+    },
+    {
+      id: "a2",
+      title: "Seasonal Cold & Cough — Prevention",
+      excerpt:
+        "Practical home remedies and when to seek medical advice for coughs.",
+      author: "Dr. Rajesh Gupta",
+      date: "Nov 28, 2025",
+      image: "https://picsum.photos/seed/a2/800/520",
+    },
+    {
+      id: "a3",
+      title: "Managing Stress at Work",
+      excerpt:
+        "Mindfulness techniques and short routines to calm anxiety during work hours.",
+      author: "Dr. R.K. Verma",
+      date: "Oct 15, 2025",
+      image: "https://picsum.photos/seed/a3/800/520",
+    },
+    {
+      id: "a4",
+      title: "Healthy Eating on a Budget",
+      excerpt: "Affordable meal plans and grocery tips for balanced nutrition.",
+      author: "Dt. Arun Kumar",
+      date: "Sep 30, 2025",
+      image: "https://picsum.photos/seed/a4/800/520",
+    },
+    {
+      id: "a5",
+      title: "Sleep Hygiene for Shift Workers",
+      excerpt:
+        "How to manage circadian rhythm disruptions and improve sleep quality.",
+      author: "Dr. Neha Gupta",
+      date: "Aug 20, 2025",
+      image: "https://picsum.photos/seed/a5/800/520",
+    },
+    {
+      id: "a6",
+      title: "Exercise Quick-Routines",
+      excerpt: "10-minute routines you can do at your desk or in small spaces.",
+      author: "Dr. V.K. Verma",
+      date: "Jul 12, 2025",
+      image: "https://picsum.photos/seed/a6/800/520",
+    },
+  ];
+
+  const forumHighlights = [
+    {
+      id: "f1",
+      category: "General Health",
+      question:
+        "Is constant fatigue and slight hair fall a sign of thyroid issues?",
+      excerpt:
+        "While fatigue and hair fall are common signs of stress, they are also classic symptoms of hypothyroidism.",
+      expert: "Dr. Priya Sharma",
+    },
+    {
+      id: "f2",
+      category: "Diet & Nutrition",
+      question:
+        "What is the best diet plan for losing belly fat without losing muscle mass?",
+      excerpt:
+        "Focus on a high-protein diet combined with strength training and avoid refined sugars.",
+      expert: "Dt. Arun Kumar",
+    },
+    {
+      id: "f3",
+      category: "Skin & Hair",
+      question:
+        "Sudden acne breakout on cheeks at age 28. What could be the cause?",
+      excerpt:
+        "Adult acne is often hormonal; consider PCOD screening and topical care.",
+      expert: "Dr. Neha Gupta",
+    },
+    {
+      id: "f4",
+      category: "Mental Health",
+      question: "How to deal with anxiety attacks at night before sleeping?",
+      excerpt:
+        "Try breathing techniques like 4-7-8, avoid screens before bed, and practice relaxation.",
+      expert: "Dr. R.K. Verma",
+    },
+    {
+      id: "f5",
+      category: "Cardiology",
+      question: "Sharp pain in left chest while running, subsides on rest.",
+      excerpt:
+        "This is a classic presentation of stable angina — an exercise ECG/TMT and cardiology consult recommended.",
+      expert: "Dr. A.K. Singh",
+    },
+  ];
+
+  const articlesRef = useRef(null);
+  const forumRef = useRef(null);
+
+  const scrollContainer = (ref, dir = "right") => {
+    if (!ref?.current) return;
+    const el = ref.current;
+    const amount = el.clientWidth * 0.8;
+    el.scrollBy({
+      left: dir === "right" ? amount : -amount,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollToHighlights = () => {
+    const el = document.getElementById("highlights");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div
       className={`min-h-screen font-sans overflow-hidden w-full relative transition-colors duration-500 ${
@@ -483,6 +604,9 @@ export default function LandingPage() {
             {isEmergency ? "Emergency Response" : "Real-Time Healthcare Access"}
           </h1>
 
+          {/* hide native scrollbars for highlight sliders */}
+          <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}`}</style>
+
           <p
             className={`text-lg mb-10 font-medium ${
               isEmergency
@@ -497,10 +621,10 @@ export default function LandingPage() {
 
           {/* GRID LAYOUT: Left (OPD), Center (Search), Right (Services) */}
           <div className="w-full grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-6 items-start text-left relative z-20">
-            {/* 1. LEFT PANEL: LIVE OPD */}
+            {/* 3. RIGHT PANEL: LIVE OPD */}
             {!isEmergency && (
               <div
-                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-2 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
+                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-2 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
                 style={{ zIndex: 10 }}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
@@ -749,10 +873,10 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* 3. RIGHT PANEL: QUICK SERVICES */}
+            {/* 1. LEFT PANEL: QUICK SERVICES */}
             {!isEmergency && (
               <div
-                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-3 lg:order-3 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
+                className="w-full bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-2xl p-5 shadow-xl shadow-blue-200/50 dark:shadow-slate-900/50 flex flex-col gap-4 order-3 lg:order-1 h-full min-h-[250px] transition-transform hover:scale-[1.02] group relative overflow-hidden"
                 style={{ zIndex: 10 }}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-cyan-500"></div>
@@ -773,7 +897,35 @@ export default function LandingPage() {
 
                 <div className="flex flex-col gap-2">
                   <button
-                    onClick={() => navigate("/labs/track")}
+                    onClick={() => setActiveTab("hospitals")}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 dark:group-hover/btn:bg-emerald-600 group-hover/btn:text-white transition-all">
+                      <Building size={16} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold">Hospitals Near Me</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
+                        Government and Private
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("doctors")}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover/btn:bg-blue-600 dark:group-hover/btn:bg-blue-500 group-hover/btn:text-white transition-all">
+                      <User size={16} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold">Search Doctors</p>
+                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
+                        Specialists
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => navigate("/dashboard/")}
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
                   >
                     <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 group-hover/btn:bg-orange-500 dark:group-hover/btn:bg-orange-600 group-hover/btn:text-white transition-all">
@@ -786,40 +938,175 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </button>
-                  <button
-                    onClick={() => setActiveTab("hospitals")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 dark:group-hover/btn:bg-emerald-600 group-hover/btn:text-white transition-all">
-                      <Building size={16} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold">Hospitals</p>
-                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
-                        View List
-                      </p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("doctors")}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-800 dark:text-slate-300 transition-colors text-left group/btn"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover/btn:bg-blue-600 dark:group-hover/btn:bg-blue-500 group-hover/btn:text-white transition-all">
-                      <User size={16} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold">Doctors</p>
-                      <p className="text-[10px] text-blue-600 dark:text-slate-400">
-                        Specialists
-                      </p>
-                    </div>
-                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
+        {/* Scroll hint button moved below as absolute child of the hero */}
+        {/* Scroll hint button attached to hero bottom (stays with first section) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+          <button
+            onClick={scrollToHighlights}
+            className="p-3 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-lg animate-bounce"
+            aria-label="Scroll down"
+          >
+            <ChevronDown size={22} className="text-blue-700 dark:text-white" />
+          </button>
+          <p className="mt-2 text-sm text-blue-700 dark:text-slate-300">
+            See highlights below
+          </p>
+        </div>
       </section>
+      {/* --- HIGHLIGHTS: Articles & Forum (appear after hero) --- */}
+      <div
+        id="highlights"
+        className="w-full bg-transparent py-12 relative z-20"
+        style={{ scrollMarginTop: "88px" }}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Articles */}
+          <div className="relative mb-8">
+            <h3 className="text-2xl font-bold text-blue-900 dark:text-white mb-2">
+              From Our Doctors
+            </h3>
+            <p className="text-sm text-blue-700 dark:text-slate-300 mb-4">
+              Helpful articles, tips and research highlights
+            </p>
+
+            <button
+              onClick={() => scrollContainer(articlesRef, "left")}
+              aria-label="Previous articles"
+              className="absolute -left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-md"
+              style={{ transform: "translateY(-50%)" }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            <button
+              onClick={() => scrollContainer(articlesRef, "right")}
+              aria-label="Next articles"
+              className="absolute -right-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-md"
+              style={{ transform: "translateY(-50%)" }}
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            <div
+              ref={articlesRef}
+              className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrolling-touch no-scrollbar py-2 px-1"
+            >
+              {doctorArticles.map((a) => (
+                <article
+                  key={a.id}
+                  className="group snap-center min-w-[320px] max-w-sm bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-xl p-4 shadow-md transform transition-all hover:scale-[1.03] hover:-translate-y-1 hover:shadow-xl relative overflow-hidden"
+                >
+                  <div className="w-full h-40 overflow-hidden rounded-md mb-3">
+                    <img
+                      src={a.image}
+                      alt={a.title}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          "https://picsum.photos/seed/placeholder/800/520";
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <h4 className="font-bold text-sm text-blue-900 dark:text-white mb-2">
+                    {a.title}
+                  </h4>
+                  <p className="text-xs text-blue-700 dark:text-slate-300 mb-3">
+                    {a.excerpt}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-blue-500 dark:text-slate-400">
+                    <span>{a.author}</span>
+                    <span>{a.date}</span>
+                  </div>
+
+                  <div className="absolute right-4 bottom-4">
+                    <button
+                      onClick={() => navigate("/articles")}
+                      className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold shadow-lg hover:scale-105"
+                    >
+                      Read Article
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          {/* Forum Highlights */}
+          <div className="relative">
+            <h3 className="text-2xl font-bold text-blue-900 dark:text-white mb-2">
+              Forum Highlights
+            </h3>
+            <p className="text-sm text-blue-700 dark:text-slate-300 mb-4">
+              Top questions and expert answers from our community
+            </p>
+
+            <button
+              onClick={() => scrollContainer(forumRef, "left")}
+              aria-label="Previous forum"
+              className="absolute -left-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-md"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            <button
+              onClick={() => scrollContainer(forumRef, "right")}
+              aria-label="Next forum"
+              className="absolute -right-6 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 shadow-md"
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            <div
+              ref={forumRef}
+              className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrolling-touch no-scrollbar py-2 px-1"
+            >
+              {forumHighlights.map((f) => (
+                <article
+                  key={f.id}
+                  className="group snap-center min-w-[320px] max-w-sm bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-xl p-4 shadow-md transform transition-all hover:scale-[1.03] hover:-translate-y-1 hover:shadow-xl relative overflow-hidden"
+                >
+                  <span className="text-[10px] uppercase font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
+                    {f.category}
+                  </span>
+                  <h4 className="font-bold text-sm text-blue-900 dark:text-white mt-2 mb-2">
+                    {f.question}
+                  </h4>
+                  <p className="text-xs text-blue-700 dark:text-slate-300 mb-3">
+                    {f.excerpt}
+                  </p>
+                  <div className="text-xs text-blue-500 dark:text-slate-400">
+                    <span>{f.expert}</span>
+                  </div>
+
+                  <div className="absolute right-4 bottom-4">
+                    <button
+                      onClick={() => navigate("/forum")}
+                      className="opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all bg-white dark:bg-slate-700 border border-blue-100 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 dark:text-blue-300 shadow-lg hover:scale-105"
+                    >
+                      Read More
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => navigate("/forum")}
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
+              >
+                Ask Your Question <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

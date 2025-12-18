@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle,
@@ -25,8 +26,10 @@ function Dashboard() {
     }, [navigate]);
   }
 
+  const { logout } = useAuth();
+
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    logout();
     alert("Logged out successfully!");
     navigate("/login");
   };
@@ -46,7 +49,7 @@ function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:bg-slate-900 relative font-sans pt-28 pb-10 transition-colors duration-300">
       {/* Dark mode background overlay */}
       <div className="hidden dark:block absolute inset-0 bg-slate-900 pointer-events-none z-0" />
-      
+
       {/* Background Pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none fixed z-0"
@@ -87,39 +90,54 @@ function Dashboard() {
           {/* Card 1 */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500 dark:border-blue-400 flex items-center space-x-4 transition-all hover:scale-[1.02] hover:shadow-xl">
             <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-              <Calendar size={24} className="text-blue-600 dark:text-blue-400" />
+              <Calendar
+                size={24}
+                className="text-blue-600 dark:text-blue-400"
+              />
             </div>
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
                 Appointments
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">3 Upcoming</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                3 Upcoming
+              </p>
             </div>
           </div>
 
           {/* Card 2 */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500 dark:border-green-400 flex items-center space-x-4 transition-all hover:scale-[1.02] hover:shadow-xl">
             <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-              <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
+              <CheckCircle
+                size={24}
+                className="text-green-600 dark:text-green-400"
+              />
             </div>
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
                 Completed
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">12 Visits</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                12 Visits
+              </p>
             </div>
           </div>
 
           {/* Card 3 */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500 dark:border-purple-400 flex items-center space-x-4 transition-all hover:scale-[1.02] hover:shadow-xl">
             <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-              <FileText size={24} className="text-purple-600 dark:text-purple-400" />
+              <FileText
+                size={24}
+                className="text-purple-600 dark:text-purple-400"
+              />
             </div>
             <div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
                 Reports
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">8 Available</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                8 Available
+              </p>
             </div>
           </div>
         </div>
@@ -127,7 +145,10 @@ function Dashboard() {
         {/* Main Content (Activity) */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border-4 border-white/10 dark:border-slate-700/50 transition-colors duration-300">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-            <ActivityIcon size={24} className="mr-2 text-blue-600 dark:text-blue-400" />
+            <ActivityIcon
+              size={24}
+              className="mr-2 text-blue-600 dark:text-blue-400"
+            />
             Recent Activity
           </h2>
 
