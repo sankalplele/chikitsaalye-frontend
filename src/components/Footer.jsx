@@ -30,16 +30,28 @@ export default function Footer() {
             with doctors, hospitals, and labs across Bharat.
           </p>
           <div className="flex space-x-4 pt-2">
-            <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+            <a
+              href="#"
+              className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+            >
               <Facebook size={20} />
             </a>
-            <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+            <a
+              href="#"
+              className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+            >
               <Twitter size={20} />
             </a>
-            <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+            <a
+              href="#"
+              className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+            >
               <Instagram size={20} />
             </a>
-            <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+            <a
+              href="#"
+              className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+            >
               <Linkedin size={20} />
             </a>
           </div>
@@ -47,16 +59,21 @@ export default function Footer() {
 
         {/* Column 2: Quick Links */}
         <div>
-          <h3 className="text-white dark:text-white font-bold text-lg mb-4">Quick Links</h3>
+          <h3 className="text-white dark:text-white font-bold text-lg mb-4">
+            Quick Links
+          </h3>
           <ul className="space-y-2 text-sm">
             <li>
-              <Link to="/" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <Link
+                to="/"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Home
               </Link>
             </li>
             <li>
               <Link
-                to="/search"
+                to="/"
                 className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
               >
                 Find Doctors
@@ -64,18 +81,18 @@ export default function Footer() {
             </li>
             <li>
               <Link
-                to="/search?type=hospitals"
+                to="/"
                 className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
               >
-                Hospitals
+                Hospitals Near Me
               </Link>
             </li>
             <li>
               <Link
-                to="/search?type=labs"
+                to="/"
                 className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
               >
-                Pathology Labs
+                Pathology Labs Near Me
               </Link>
             </li>
             <li>
@@ -91,30 +108,47 @@ export default function Footer() {
 
         {/* Column 3: Legal & Help */}
         <div>
-          <h3 className="text-white dark:text-white font-bold text-lg mb-4">Support</h3>
+          <h3 className="text-white dark:text-white font-bold text-lg mb-4">
+            Support
+          </h3>
           <ul className="space-y-2 text-sm">
             <li>
-              <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <a
+                href="#"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Privacy Policy
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <a
+                href="#"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Terms of Service
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <a
+                href="#"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Emergency Protocols
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <a
+                href="#"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Partner with Us
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+              <a
+                href="#"
+                className="hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
+              >
                 Help Center
               </a>
             </li>
@@ -123,18 +157,29 @@ export default function Footer() {
 
         {/* Column 4: Contact */}
         <div>
-          <h3 className="text-white dark:text-white font-bold text-lg mb-4">Contact Us</h3>
+          <h3 className="text-white dark:text-white font-bold text-lg mb-4">
+            Contact Us
+          </h3>
           <ul className="space-y-4 text-sm">
             <li className="flex items-start space-x-3">
-              <MapPin size={18} className="text-orange-500 dark:text-orange-400 mt-0.5 shrink-0" />
+              <MapPin
+                size={18}
+                className="text-orange-500 dark:text-orange-400 mt-0.5 shrink-0"
+              />
               <span>Lucknow, Uttar Pradesh, India</span>
             </li>
             <li className="flex items-center space-x-3">
-              <Phone size={18} className="text-orange-500 dark:text-orange-400 shrink-0" />
-              <span>+91 9999999999</span>
+              <Phone
+                size={18}
+                className="text-orange-500 dark:text-orange-400 shrink-0"
+              />
+              <span>+91 8429739118</span>
             </li>
             <li className="flex items-center space-x-3">
-              <Mail size={18} className="text-orange-500 dark:text-orange-400 shrink-0" />
+              <Mail
+                size={18}
+                className="text-orange-500 dark:text-orange-400 shrink-0"
+              />
               <span>support@chikitsaalye.com</span>
             </li>
           </ul>

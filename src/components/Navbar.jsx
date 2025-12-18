@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   CircleQuestionMark,
   Sun,
+  Shield,
   Moon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -29,7 +30,10 @@ function Navbar() {
   const navLinks = [
     { path: "/", label: "Home", icon: Home },
     ...(isAuthenticated
-      ? [{ path: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
+      ? [
+          { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { path: "/admin", label: "Admin", icon: Shield },
+        ]
       : []),
     { path: "/forum", label: "Forum", icon: CircleQuestionMark },
   ];

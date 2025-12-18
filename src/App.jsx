@@ -20,6 +20,7 @@ import HospitalProfile from "./pages/HospitalProfile.jsx";
 import DoctorProfile from "./pages/DoctorProfile.jsx";
 import NotFound from "./components/NotFound.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
+import AdminPanel from "./pages/AdminPanel.jsx";
 
 const AppContent = () => {
   const location = useLocation();
@@ -34,6 +35,7 @@ const AppContent = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminPanel />} />
           </Route>
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/lab/:id" element={<LabProfile />} />
