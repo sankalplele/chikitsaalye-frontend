@@ -30,10 +30,7 @@ function Navbar() {
   const navLinks = [
     { path: "/", label: "Home", icon: Home },
     ...(isAuthenticated
-      ? [
-          { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { path: "/admin", label: "Admin", icon: Shield },
-        ]
+      ? [{ path: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]
       : []),
     { path: "/forum", label: "Forum", icon: CircleQuestionMark },
   ];

@@ -35,7 +35,6 @@ const AppContent = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin" element={<AdminPanel />} />
           </Route>
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/lab/:id" element={<LabProfile />} />
