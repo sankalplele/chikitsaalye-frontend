@@ -39,6 +39,7 @@ import {
 // --- STATIC DATABASE (Doctors, Labs, AND Specific Tests) ---
 const SEARCH_DATABASE = [
   // DOCTORS
+  // DOCTORS
   {
     id: "d1",
     name: "Dr. Rajesh Gupta",
@@ -60,6 +61,161 @@ const SEARCH_DATABASE = [
     kind: "doctor",
     tabs: ["doctors"],
   },
+  {
+    id: "d4",
+    name: "Dr. Susan Methews",
+    category: "Cardiologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d5",
+    name: "Dr. R.K. Mishra",
+    category: "Neurologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d6",
+    name: "Dr. P.K. Sharma",
+    category: "Dermatologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  // --- NEW ADDITIONS ---
+  {
+    id: "d7",
+    name: "Dr. Amit Kumar",
+    category: "Pediatrician",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d8",
+    name: "Dr. Neha Kapoor",
+    category: "Dentist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d9",
+    name: "Dr. S.K. Singh",
+    category: "ENT Specialist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d10",
+    name: "Dr. Priya Desai",
+    category: "Psychiatrist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d11",
+    name: "Dr. Rajiv Malhotra",
+    category: "Oncologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d12",
+    name: "Dr. Meera Joshi",
+    category: "Ophthalmologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d13",
+    name: "Dr. Suresh Reddy",
+    category: "Urologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d14",
+    name: "Dr. Anita Saxena",
+    category: "Gastroenterologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d15",
+    name: "Dr. Vikram Seth",
+    category: "Pulmonologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d16",
+    name: "Dr. Pooja Agarwal",
+    category: "Endocrinologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d17",
+    name: "Dr. Arjun Mehta",
+    category: "Rheumatologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d18",
+    name: "Dr. Kavita Krishnan",
+    category: "Nephrologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d19",
+    name: "Dr. Sameer Khan",
+    category: "General Surgeon",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d20",
+    name: "Dr. Ritu Choudhary",
+    category: "Dermatologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d21",
+    name: "Dr. Manoj Tiwari",
+    category: "Cardiologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d22",
+    name: "Dr. Swati Mishra",
+    category: "Gynaecologist",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d23",
+    name: "Dr. Alok Gupta",
+    category: "Orthopedics",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d24",
+    name: "Dr. Nidhi Verma",
+    category: "Pediatrician",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
+  {
+    id: "d25",
+    name: "Dr. Sanjay Patel",
+    category: "General Physician",
+    kind: "doctor",
+    tabs: ["doctors"],
+  },
 
   // LABS
   {
@@ -72,6 +228,20 @@ const SEARCH_DATABASE = [
   {
     id: "l2",
     name: "City X-Ray & Scan",
+    category: "Radiology",
+    kind: "lab",
+    tabs: ["labs"],
+  },
+  {
+    id: "l3",
+    name: "Urban Diagnostics",
+    category: "Pathology",
+    kind: "lab",
+    tabs: ["labs"],
+  },
+  {
+    id: "l4",
+    name: "Metro Imaging",
     category: "Radiology",
     kind: "lab",
     tabs: ["labs"],
@@ -138,7 +308,7 @@ const CATEGORIES = {
     { icon: Brain, label: "MRI Scan", id: "MRI" },
     { icon: Activity, label: "Diabetes/Sugar", id: "SUGAR" },
     { icon: Dna, label: "Thyroid", id: "THYROID" },
-    { icon: Scan, label: "X-Ray", id: "XRAY" },
+    { icon: Scan, label: "X-Ray", id: "X-RAY" },
     { icon: Thermometer, label: "Fever Panel", id: "FEVER" },
   ],
 };
@@ -251,6 +421,7 @@ export default function LandingPage() {
       ...SEARCH_DATABASE,
       ...apiHospitals,
       ...hospitalServices,
+      ...categoryItems,
     ];
     setSearchIndex(mergedData);
   }, [apiHospitals, hospitalServices]);
@@ -313,12 +484,13 @@ export default function LandingPage() {
     let targetLon = userLocation?.lon ?? null;
     if (
       (!targetLat || !targetLon) &&
-      selectedLocationKey &&
+      typeof selectedLocationKey !== "undefined" &&
       selectedLocationKey !== "custom"
     ) {
-      const preset = PRESET_LOCATIONS.find(
-        (p) => p.key === selectedLocationKey
-      );
+      const preset =
+        typeof PRESET_LOCATIONS !== "undefined"
+          ? PRESET_LOCATIONS.find((p) => p.key === selectedLocationKey)
+          : null;
       if (preset) {
         if (preset.getLatLon) {
           const loc = preset.getLatLon();
@@ -333,23 +505,34 @@ export default function LandingPage() {
       }
     }
 
-    if (!targetLat || !targetLon) {
+    // Allow searches without coordinates for doctors and labs (no nearby API yet)
+    const effectiveType = overrideType || activeTab;
+    if (
+      (!targetLat || !targetLon) &&
+      effectiveType !== "doctors" &&
+      effectiveType !== "labs"
+    ) {
       setLocationError(true);
       locationInputRef.current?.focus();
       return;
     }
-
     const params = new URLSearchParams();
     params.set("q", queryToUse);
     params.set("type", overrideType || activeTab);
-    params.set("lat", String(targetLat));
-    params.set("lon", String(targetLon));
+    if (targetLat && targetLon) {
+      params.set("lat", String(targetLat));
+      params.set("lon", String(targetLon));
+    }
 
     // If caller passed a service/category key, resolve it to backend service
     if (overrideService) {
       const svc = resolveServiceParam(overrideService || queryToUse);
       if (svc) params.set("service", svc);
     }
+
+    // Explicitly mark that this search should trigger backend API only when originating from hospitals tab
+    const originType = overrideType || activeTab;
+    if (originType === "hospitals") params.set("api", "1");
 
     navigate(`/search?${params.toString()}`);
   };
@@ -707,43 +890,45 @@ export default function LandingPage() {
                 )}
 
                 <div className="flex flex-col md:flex-row gap-2 relative">
-                  {/* --- UPDATED LOCATION SELECTOR DROPDOWN --- */}
-                  <div className="relative md:w-1/4 w-full group">
-                    <MapPin
-                      className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors z-10 ${
-                        isLocating
-                          ? "text-blue-500 animate-pulse"
-                          : "text-gray-400 group-hover:text-blue-500"
-                      }`}
-                      size={20}
-                    />
-                    <select
-                      ref={locationInputRef}
-                      value={locationQuery || "Near Me"}
-                      onChange={handleLocationSelect}
-                      className={`w-full pl-10 pr-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border rounded-xl outline-none text-sm text-blue-900 dark:text-slate-200 appearance-none cursor-pointer ${
-                        locationError
-                          ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20"
-                          : "border-blue-200 dark:border-slate-600 hover:border-blue-400 focus:bg-white dark:focus:bg-slate-600 focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500"
-                      }`}
-                    >
-                      <option value="Near Me">Near Me</option>
-                      <option value="Kanpur">Kanpur</option>
-                      <option value="Lucknow">Lucknow</option>
-                      <option value="Delhi">Delhi</option>
-                    </select>
+                  {/* --- UPDATED LOCATION SELECTOR DROPDOWN (shown only for hospitals tab) --- */}
+                  {activeTab === "hospitals" && (
+                    <div className="relative md:w-1/4 w-full group">
+                      <MapPin
+                        className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors z-10 ${
+                          isLocating
+                            ? "text-blue-500 animate-pulse"
+                            : "text-gray-400 group-hover:text-blue-500"
+                        }`}
+                        size={20}
+                      />
+                      <select
+                        ref={locationInputRef}
+                        value={locationQuery || "Near Me"}
+                        onChange={handleLocationSelect}
+                        className={`w-full pl-10 pr-10 py-3 h-[48px] bg-blue-50 dark:bg-slate-700 border rounded-xl outline-none text-sm text-blue-900 dark:text-slate-200 appearance-none cursor-pointer ${
+                          locationError
+                            ? "border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20"
+                            : "border-blue-200 dark:border-slate-600 hover:border-blue-400 focus:bg-white dark:focus:bg-slate-600 focus:ring-1 focus:ring-blue-300 dark:focus:ring-blue-500"
+                        }`}
+                      >
+                        <option value="Near Me">Near Me</option>
+                        <option value="Kanpur">Kanpur</option>
+                        <option value="Lucknow">Lucknow</option>
+                        <option value="Delhi">Delhi</option>
+                      </select>
 
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                      {isLocating ? (
-                        <Loader2
-                          size={16}
-                          className="animate-spin text-blue-500"
-                        />
-                      ) : (
-                        <ChevronDown size={16} />
-                      )}
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        {isLocating ? (
+                          <Loader2
+                            size={16}
+                            className="animate-spin text-blue-500"
+                          />
+                        ) : (
+                          <ChevronDown size={16} />
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="hidden md:block w-px bg-gray-200 my-2"></div>
 
