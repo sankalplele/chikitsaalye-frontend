@@ -65,7 +65,25 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 sm:h-20">
           {/* Logo */}
-
+          <Link
+            to="/"
+            className="flex items-center space-x-2.5 hover:opacity-80 transition"
+          >
+            {/* Logo Image (project logo) */}
+            <img
+              src={logo}
+              alt="Chikitsaalye Logo"
+              className="h-14 w-14 rounded-xl shadow-lg"
+            />
+            {/* Fallback Logo Icon: Orange Gradient */}
+            <div className="w-9 h-9 rounded-xl hidden items-center justify-center shadow-lg bg-gradient-to-br from-orange-500 to-red-500 text-white">
+              <span className="font-bold text-lg">C</span>
+            </div>
+            {/* Logo Text: Matches landing page */}
+            <span className="text-xl font-extrabold tracking-tight text-blue-900 dark:text-white drop-shadow-sm">
+              Chikitsaalye
+            </span>
+          </Link>
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-2">
             {/* Standard Links */}
